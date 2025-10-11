@@ -221,7 +221,7 @@ Claude Relay Meter is a VSCode extension for monitoring Claude Relay Service usa
 
 ### Preview
 
-![Example Screenshot](expImg/example1.png)
+![Example Screenshot](expImg/example-en.png)
 
 *Figure: Extension display in VSCode status bar*
 
