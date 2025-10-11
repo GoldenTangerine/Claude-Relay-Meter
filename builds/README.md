@@ -44,7 +44,7 @@ code --install-extension claude-relay-meter-1.0.0.vsix
 
 ```json
 {
-  "relayMeter.apiUrl": "https://your-api-domain.com/apiStats",
+  "relayMeter.apiUrl": "https://your-api-domain.com",
   "relayMeter.apiId": "your-uuid-format-api-id"
 }
 ```

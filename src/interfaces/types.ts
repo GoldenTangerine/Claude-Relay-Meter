@@ -115,11 +115,23 @@ export interface CostStats {
 export interface StatusBarConfig {
   apiUrl: string;
   apiId: string;
+  apiKey: string;
   refreshInterval: number;
   enableStatusBarColors: boolean;
   colorThresholds: ColorThresholds;
   customColors: CustomColors;
   enableLogging: boolean;
+}
+
+/**
+ * API Key 转换响应接口
+ */
+export interface ApiKeyResponse {
+  success: boolean;
+  data?: {
+    apiId: string;
+  };
+  message?: string;
 }
 
 /**

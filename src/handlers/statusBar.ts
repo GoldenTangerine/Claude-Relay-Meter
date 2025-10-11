@@ -217,11 +217,23 @@ function getColoredPercentage(stats: CostStats): string {
 /**
  * 显示配置提示
  * @param statusBarItem - 状态栏项实例
+ * @param missingConfig - 缺失的配置项类型
  */
-export function showConfigPrompt(statusBarItem: vscode.StatusBarItem): void {
-  log('[状态栏] 显示配置提示');
+export function showConfigPrompt(
+  statusBarItem: vscode.StatusBarItem,
+  missingConfig?: 'apiUrl' | 'apiId' | 'both'
+): void {
+  log(`[状态栏] 显示配置提示，缺失配置：${missingConfig || 'both'}`);
 
-  statusBarItem.text = '$(gear) 需要配置';
+  // 根据缺失的配置项设置不同的文本
+  if (missingConfig === 'apiUrl') {
+    statusBarItem.text = '$(gear) 未配置 API URL';
+  } else if (missingConfig === 'apiId') {
+    statusBarItem.text = '$(gear) 未配置 API ID';
+  } else {
+    statusBarItem.text = '$(gear) 需要配置';
+  }
+
   statusBarItem.color = new vscode.ThemeColor('statusBarItem.warningForeground');
   statusBarItem.tooltip = new vscode.MarkdownString(
     '## ⚙️ Claude Relay Meter\n\n**需要配置**\n\n请先配置 API URL 和 API ID\n\n[打开设置](command:claude-relay-meter.openSettings)'

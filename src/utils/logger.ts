@@ -12,10 +12,17 @@ let outputChannel: vscode.OutputChannel | undefined;
  * @param context - VSCode 扩展上下文
  */
 export function initializeLogging(context: vscode.ExtensionContext): void {
-  if (!outputChannel) {
-    outputChannel = vscode.window.createOutputChannel('Claude Relay Meter');
-    context.subscriptions.push(outputChannel);
-    log('[初始化] 日志系统已初始化');
+  try {
+    if (!outputChannel) {
+      outputChannel = vscode.window.createOutputChannel('Claude Relay Meter');
+      context.subscriptions.push(outputChannel);
+      // 使用 safeLog 避免递归调用问题
+      safeLog('[初始化] 日志系统已成功创建', false);
+    }
+  } catch (error) {
+    // 如果创建失败，至少记录到控制台
+    console.error('[Critical] 无法创建输出通道:', error);
+    throw new Error('日志系统初始化失败');
   }
 }
 
@@ -25,33 +32,55 @@ export function initializeLogging(context: vscode.ExtensionContext): void {
  * @param isError - 是否为错误日志
  */
 export function log(message: string, isError: boolean = false): void {
-  // 检查是否启用日志
-  const config = vscode.workspace.getConfiguration('relayMeter');
-  const enableLogging = config.get<boolean>('enableLogging', true);
+  try {
+    // 检查是否启用日志
+    const config = vscode.workspace.getConfiguration('relayMeter');
+    const enableLogging = config.get<boolean>('enableLogging', true);
 
-  if (!enableLogging && !isError) {
-    // 如果未启用日志且不是错误，则跳过
-    return;
-  }
+    // 错误总是记录，或者日志启用时记录
+    const shouldLog = isError || enableLogging;
 
-  const timestamp = new Date().toLocaleString();
-  const prefix = isError ? '[错误]' : '[信息]';
-  const logMessage = `${timestamp} ${prefix} ${message}`;
-
-  if (outputChannel) {
-    outputChannel.appendLine(logMessage);
-
-    // 如果是错误，自动显示输出面板
-    if (isError) {
-      outputChannel.show(true);
+    if (shouldLog) {
+      safeLog(message, isError);
     }
+  } catch (error) {
+    // 如果日志记录失败，至少输出到控制台
+    console.error('[日志错误] 无法记录日志:', message, error);
   }
+}
 
-  // 在调试模式下也输出到控制台
+/**
+ * 安全地记录日志
+ * @param message - 日志消息
+ * @param isError - 是否为错误日志
+ */
+function safeLog(message: string, isError: boolean): void {
+  const timestamp = new Date().toISOString();
+  const logLevel = isError ? 'ERROR' : 'INFO';
+  const logMessage = `[${timestamp}] [${logLevel}] ${message}`;
+
+  // 总是先输出到控制台（确保日志可见）
   if (isError) {
     console.error(logMessage);
   } else {
     console.log(logMessage);
+  }
+
+  // 尝试输出到 Output 通道
+  try {
+    if (outputChannel) {
+      outputChannel.appendLine(logMessage);
+
+      // 如果是错误，自动显示输出面板
+      if (isError) {
+        outputChannel.show(true);
+      }
+    } else {
+      // 如果 outputChannel 未初始化，输出警告
+      console.warn('[警告] Output 通道未初始化，日志仅在控制台显示');
+    }
+  } catch (error) {
+    console.error('[日志错误] 无法写入 Output 通道:', error);
   }
 }
 

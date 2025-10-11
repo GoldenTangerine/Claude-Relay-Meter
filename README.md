@@ -51,7 +51,7 @@ npm run package
 
 - **API URL** (`relayMeter.apiUrl`)
   - 描述：中继服务 API 基础地址
-  - 示例：`https://text.com/apiStats`
+  - 示例：`https://text.com`
 
 - **API ID** (`relayMeter.apiId`)
   - 描述：您的 API 标识符

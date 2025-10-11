@@ -32,8 +32,8 @@ npm run package
 
 您需要准备以下信息：
 
-1. **API URL**：您的中继服务 API 地址
-   - 示例：`https://text.com/apiStats`
+1. **API URL**：您的中继服务 API 基础地址
+   - 示例：`https://text.com`
 
 2. **API ID**：您的 API 标识符（UUID 格式）
    - 示例：`34arr92a-cb42-58op-56op-ggy15rt9878c`
@@ -68,7 +68,7 @@ npm run package
 
 ```json
 {
-  "relayMeter.apiUrl": "https://text.com/apiStats",
+  "relayMeter.apiUrl": "https://text.com",
   "relayMeter.apiId": "34arr92a-cb42-58op-56op-ggy15rt9878c",
   "relayMeter.refreshInterval": 60,
   "relayMeter.enableStatusBarColors": true,

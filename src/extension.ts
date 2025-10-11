@@ -15,6 +15,7 @@ import {
 import {
   fetchRelayStatsWithRetry,
   validateApiConfig,
+  getApiIdFromKey,
 } from './services/api';
 import { StatusBarConfig } from './interfaces/types';
 
@@ -29,41 +30,57 @@ let isWindowFocused: boolean = true;
  */
 export async function activate(context: vscode.ExtensionContext) {
   try {
-    log('[激活] 插件开始激活...');
-
-    // 初始化日志系统
+    // ⚠️ 关键修改：必须首先初始化日志系统，然后才能调用 log()
     initializeLogging(context);
 
+    log('[激活] 插件开始激活...');
+    log('[激活] VSCode 版本要求: ^1.96.0');
+
     // 创建状态栏项
+    log('[状态栏] 开始创建状态栏项...');
     statusBarItem = createStatusBarItem();
     context.subscriptions.push(statusBarItem);
+    log('[状态栏] 状态栏项创建成功');
+
+    // 显式显示状态栏项（确保可见）
+    statusBarItem.show();
+    log('[状态栏] 状态栏项已显示');
 
     // 注册命令
+    log('[命令] 开始注册命令...');
     registerCommands(context);
 
     // 监听配置变更
+    log('[配置] 开始注册配置监听器...');
     registerConfigurationListener(context);
 
     // 监听窗口焦点变化
+    log('[窗口] 开始注册窗口焦点监听器...');
     registerWindowFocusListener(context);
 
     // 获取配置并验证
+    log('[配置] 读取并验证配置...');
     const config = getConfiguration();
+    log(`[配置] API URL: ${config.apiUrl ? '已配置' : '未配置'}`);
+    log(`[配置] API ID: ${config.apiId ? '已配置' : '未配置'}`);
+    log(`[配置] API Key: ${config.apiKey ? '已配置' : '未配置'}`);
+
     const validation = validateApiConfig(config.apiUrl, config.apiId);
 
     if (!validation.valid) {
       // 配置无效，显示配置提示
       log(`[激活] 配置无效：${validation.message}`);
-      showConfigPrompt(statusBarItem);
+      showConfigPrompt(statusBarItem, validation.missingConfig);
 
-      // 显示提示消息
+      // 显示更友好的首次配置提示
       vscode.window
         .showWarningMessage(
           `Claude Relay Meter: ${validation.message}`,
-          '打开设置'
+          '立即配置',
+          '稍后'
         )
         .then((selection) => {
-          if (selection === '打开设置') {
+          if (selection === '立即配置') {
             vscode.commands.executeCommand('claude-relay-meter.openSettings');
           }
         });
@@ -81,12 +98,18 @@ export async function activate(context: vscode.ExtensionContext) {
       startRefreshTimer();
     }
 
-    log('[激活] 插件激活成功');
+    log('[激活] ✓ 插件激活成功！');
   } catch (error) {
-    logError('[激活] 插件激活失败', error as Error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logError('[激活] ✗ 插件激活失败', error as Error);
+
+    // 确保错误显示给用户
     vscode.window.showErrorMessage(
-      `Claude Relay Meter 激活失败：${(error as Error).message}`
+      `Claude Relay Meter 激活失败：${errorMessage}`
     );
+
+    // 重新抛出错误以便 VSCode 知道激活失败
+    throw error;
   }
 }
 
@@ -201,11 +224,26 @@ async function updateStats(): Promise<void> {
     // 获取配置
     const config = getConfiguration();
 
+    // 获取实际的 API ID（优先使用 apiId，其次使用 apiKey 转换）
+    let actualApiId = config.apiId;
+
+    // 如果 apiId 为空但 apiKey 存在，则通过 apiKey 获取 apiId
+    if ((!actualApiId || actualApiId.trim() === '') && config.apiKey && config.apiKey.trim() !== '') {
+      try {
+        log('[更新] 检测到 API Key，尝试获取 API ID...');
+        actualApiId = await getApiIdFromKey(config.apiUrl, config.apiKey);
+        log(`[更新] 通过 API Key 获取到 API ID：${actualApiId}`);
+      } catch (error) {
+        logError('[更新] 通过 API Key 获取 API ID 失败', error as Error);
+        throw new Error(`无法通过 API Key 获取 API ID：${(error as Error).message}`);
+      }
+    }
+
     // 验证配置
-    const validation = validateApiConfig(config.apiUrl, config.apiId);
+    const validation = validateApiConfig(config.apiUrl, actualApiId);
     if (!validation.valid) {
       log(`[更新] 配置无效：${validation.message}`, true);
-      showConfigPrompt(statusBarItem);
+      showConfigPrompt(statusBarItem, validation.missingConfig);
       return;
     }
 
@@ -215,7 +253,7 @@ async function updateStats(): Promise<void> {
     // 获取数据（带重试）
     const data = await fetchRelayStatsWithRetry(
       config.apiUrl,
-      config.apiId,
+      actualApiId,
       3, // 最多重试 3 次
       1000 // 初始延迟 1 秒
     );
@@ -291,6 +329,7 @@ function getConfiguration(): StatusBarConfig {
   return {
     apiUrl: config.get<string>('apiUrl', ''),
     apiId: config.get<string>('apiId', ''),
+    apiKey: config.get<string>('apiKey', ''),
     refreshInterval: Math.max(config.get<number>('refreshInterval', 60), 10),
     enableStatusBarColors: config.get<boolean>('enableStatusBarColors', true),
     colorThresholds: config.get('colorThresholds', { low: 50, medium: 80 }),

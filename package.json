@@ -46,13 +46,19 @@
           "relayMeter.apiUrl": {
             "type": "string",
             "default": "",
-            "description": "中继服务 API 基础地址（例如：https://text.com/apiStats）",
+            "description": "中继服务 API 基础地址（例如：https://text.com）",
             "scope": "window"
           },
           "relayMeter.apiId": {
             "type": "string",
             "default": "",
-            "description": "用户 API 标识符（例如：34arr92a-cb42-58op-56op-ggy15rt9878c）",
+            "description": "用户 API 标识符（例如：34arr92a-cb42-58op-56op-ggy15rt9878c）。注意：当 apiId 和 apiKey 同时存在时，优先使用 apiId",
+            "scope": "window"
+          },
+          "relayMeter.apiKey": {
+            "type": "string",
+            "default": "",
+            "description": "用户 API Key（例如：cr_1234567890abcdef）。注意：当 apiId 和 apiKey 同时存在时，优先使用 apiId",
             "scope": "window"
           },
           "relayMeter.refreshInterval": {
