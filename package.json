@@ -1,0 +1,148 @@
+{
+  "name": "claude-relay-meter",
+  "displayName": "Claude Relay Meter",
+  "description": "用于监测 Claude Relay Service 中继服务用量的 VSCode 插件",
+  "version": "1.0.0",
+  "publisher": "your-publisher-name",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/claude-relay-meter"
+  },
+  "engines": {
+    "vscode": "^1.96.0"
+  },
+  "categories": [
+    "Other",
+    "Visualization"
+  ],
+  "keywords": [
+    "claude",
+    "relay",
+    "usage",
+    "monitoring",
+    "statistics"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "claude-relay-meter.refreshStats",
+        "title": "Claude Relay Meter: 刷新统计数据",
+        "icon": "$(sync)"
+      },
+      {
+        "command": "claude-relay-meter.openSettings",
+        "title": "Claude Relay Meter: 打开设置",
+        "icon": "$(gear)"
+      }
+    ],
+    "configuration": [
+      {
+        "title": "Claude Relay Meter",
+        "properties": {
+          "relayMeter.apiUrl": {
+            "type": "string",
+            "default": "",
+            "description": "中继服务 API 基础地址（例如：https://text.com/apiStats）",
+            "scope": "window"
+          },
+          "relayMeter.apiId": {
+            "type": "string",
+            "default": "",
+            "description": "用户 API 标识符（例如：34arr92a-cb42-58op-56op-ggy15rt9878c）",
+            "scope": "window"
+          },
+          "relayMeter.refreshInterval": {
+            "type": "number",
+            "default": 60,
+            "minimum": 10,
+            "description": "数据更新频率（秒），最小值为 10 秒",
+            "scope": "window"
+          },
+          "relayMeter.enableStatusBarColors": {
+            "type": "boolean",
+            "default": true,
+            "description": "启用根据使用百分比变化的状态栏颜色",
+            "scope": "window"
+          },
+          "relayMeter.colorThresholds": {
+            "type": "object",
+            "description": "颜色阈值配置",
+            "default": {
+              "low": 50,
+              "medium": 80
+            },
+            "properties": {
+              "low": {
+                "type": "number",
+                "description": "低阈值百分比（0-100），低于此值显示绿色",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "medium": {
+                "type": "number",
+                "description": "中阈值百分比（0-100），介于低阈值和中阈值之间显示黄色",
+                "minimum": 0,
+                "maximum": 100
+              }
+            },
+            "scope": "window"
+          },
+          "relayMeter.customColors": {
+            "type": "object",
+            "description": "自定义颜色配置",
+            "default": {
+              "low": "#66BB6A",
+              "medium": "#FFD700",
+              "high": "#FF6600"
+            },
+            "properties": {
+              "low": {
+                "type": "string",
+                "description": "低使用率颜色（十六进制颜色代码）"
+              },
+              "medium": {
+                "type": "string",
+                "description": "中使用率颜色（十六进制颜色代码）"
+              },
+              "high": {
+                "type": "string",
+                "description": "高使用率颜色（十六进制颜色代码）"
+              }
+            },
+            "scope": "window"
+          },
+          "relayMeter.enableLogging": {
+            "type": "boolean",
+            "default": true,
+            "description": "启用详细日志记录以便调试",
+            "scope": "window"
+          }
+        }
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile",
+    "lint": "eslint src --ext ts",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.20",
+    "@types/vscode": "^1.96.0",
+    "@typescript-eslint/eslint-plugin": "^8.32.1",
+    "@typescript-eslint/parser": "^8.32.1",
+    "eslint": "^9.27.0",
+    "typescript": "^5.8.3",
+    "@vscode/vsce": "^3.2.1"
+  },
+  "dependencies": {
+    "axios": "^1.9.0"
+  }
+}

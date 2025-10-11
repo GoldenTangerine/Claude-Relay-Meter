@@ -1,0 +1,45 @@
+# 源代码文件（已编译到 out/）
+src/**
+tsconfig.json
+
+# 开发和测试文件
+.vscode/**
+.vscode-test/**
+.claude/**
+
+# 构建和依赖
+node_modules/**
+!node_modules/axios/**
+!node_modules/follow-redirects/**
+!node_modules/form-data/**
+!node_modules/asynckit/**
+!node_modules/combined-stream/**
+!node_modules/delayed-stream/**
+!node_modules/mime-types/**
+!node_modules/mime-db/**
+!node_modules/proxy-from-env/**
+
+# Git 相关
+.git/**
+.gitignore
+
+# 文档（保留必要的）
+FINAL_CHECK_REPORT.txt
+SECURITY_CHECK.md
+plan.md
+
+# 编译和打包
+builds/**
+*.vsix
+
+# 日志和临时文件
+*.log
+npm-debug.log*
+.DS_Store
+
+# 配置示例
+.vscode/settings.json.example
+
+# ESLint 配置
+.eslintrc*
+eslint.config.mjs

@@ -1,0 +1,11 @@
+out
+node_modules
+.vscode-test/
+*.vsix
+.DS_Store
+*.log
+.vscode
+plan.md
+.claude/settings.local.json
+FINAL_CHECK_REPORT.txt
+SECURITY_CHECK.md
