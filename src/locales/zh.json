@@ -1,0 +1,96 @@
+{
+  "statusBar": {
+    "loading": "加载中...",
+    "error": "获取数据失败",
+    "notConfigured": "Claude Relay Meter 需要配置",
+    "notConfiguredApiUrl": "未配置 API URL",
+    "notConfiguredApiId": "未配置 API ID/Key",
+    "title": "Claude Relay Meter",
+    "initializing": "Claude Relay Meter",
+    "refreshData": "刷新数据"
+  },
+  "commands": {
+    "refreshStats": "刷新统计数据",
+    "openSettings": "打开设置",
+    "selectLanguage": "选择语言",
+    "configureNow": "立即配置",
+    "later": "稍后",
+    "languageChanged": "语言已切换为 {language}，界面将自动更新。",
+    "selectLanguagePrompt": "选择 Claude Relay Meter 界面语言 / Select Language"
+  },
+  "notifications": {
+    "configInvalid": "Claude Relay Meter: {message}",
+    "dataRefreshed": "数据已刷新",
+    "errorOccurred": "Claude Relay Meter: 获取数据失败 - {error}",
+    "retryOption": "重试",
+    "openSettingsOption": "打开设置"
+  },
+  "tooltips": {
+    "title": "⚡ Claude Relay Meter",
+    "user": "用户",
+    "dailyCostLimit": "📊 每日费用限制",
+    "totalCostLimit": "💰 总费用限制",
+    "opusWeeklyCostLimit": "🚀 Opus 模型周费用限制",
+    "otherStats": "📈 其他统计",
+    "usageStatus": "使用情况",
+    "usedAmount": "使用情况",
+    "limitAmount": "限额",
+    "percentage": "使用百分比",
+    "totalRequests": "总请求数",
+    "totalTokens": "总 Token 数",
+    "clickToRefresh": "点击状态栏刷新数据",
+    "clickToConfigure": "点击打开设置",
+    "tip": "💡 提示",
+    "updateTime": "🕒 更新时间",
+    "needConfiguration": "⚙️ Claude Relay Meter\n\n需要配置\n\n{message}",
+    "pleaseConfigureFirst": "请先配置 API URL 和 API ID（或 API Key）",
+    "pleaseConfigureApiUrl": "请先配置 API URL",
+    "pleaseConfigureApiIdOrKey": "请先配置 API ID 或 API Key"
+  },
+  "errors": {
+    "invalidApiUrl": "API URL 格式无效",
+    "invalidApiId": "API ID 格式无效",
+    "invalidUuid": "不是有效的 UUID 格式",
+    "networkError": "网络请求失败",
+    "apiError": "API 错误",
+    "requestFailed": "API 请求失败",
+    "activationFailed": "Claude Relay Meter 激活失败：{error}",
+    "cannotGetApiIdFromKey": "无法通过 API Key 获取 API ID：{error}"
+  },
+  "logs": {
+    "activating": "Claude Relay Meter 插件激活中...",
+    "activationComplete": "插件激活完成",
+    "statusBarCreated": "状态栏项已创建并显示",
+    "configInvalid": "配置无效 - {message}",
+    "configValid": "配置有效，开始获取数据...",
+    "fetchingData": "开始刷新统计数据...",
+    "dataFetched": "统计数据更新成功",
+    "windowFocused": "窗口获得焦点，刷新数据",
+    "configChanged": "配置变更，刷新数据",
+    "manualRefresh": "手动刷新统计数据",
+    "openingSettings": "打开设置",
+    "timerStarted": "启动定时刷新，间隔：{interval} 秒",
+    "i18nInitialized": "国际化系统已初始化",
+    "languageChanged": "语言已切换: {language}"
+  },
+  "api": {
+    "requestingUserStats": "开始请求用量数据，URL: {url}/apiStats/api/user-stats",
+    "requestSuccess": "API 请求成功",
+    "requestFailed": "API 请求失败：{error}",
+    "retrying": "开始重试 API 请求（第 {attempt} 次，共 {max} 次）",
+    "retryAttempt": "第 {attempt} 次重试，延迟 {delay}ms",
+    "validatingConfig": "验证 API 配置...",
+    "gettingApiIdFromKey": "检测到 API Key，尝试获取 API ID..."
+  },
+  "settings": {
+    "apiUrl": "中继服务 API 基础地址 / Relay service API base URL",
+    "apiId": "用户 API 标识符 / User API identifier (UUID format)",
+    "apiKey": "用户 API Key / User API Key",
+    "refreshInterval": "数据更新频率（秒）/ Data refresh interval (seconds)",
+    "enableStatusBarColors": "启用根据使用百分比变化的状态栏颜色 / Enable colored status bar based on usage percentage",
+    "colorThresholds": "颜色阈值配置 / Color threshold configuration",
+    "customColors": "自定义颜色配置 / Custom color configuration",
+    "enableLogging": "启用详细日志记录以便调试 / Enable detailed logging for debugging",
+    "language": "扩展界面语言 / Extension interface language"
+  }
+}

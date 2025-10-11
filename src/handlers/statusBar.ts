@@ -8,6 +8,7 @@ import { RelayApiResponse, CostStats } from '../interfaces/types';
 import { formatCost, formatPercentage, formatTooltipLine } from '../utils/formatter';
 import { getStatusBarColor } from '../utils/colorHelper';
 import { log } from '../utils/logger';
+import { t } from '../utils/i18n';
 
 /**
  * 创建状态栏项
@@ -87,7 +88,7 @@ export function showErrorStatus(
   statusBarItem.text = `$(alert) ${errorMessage}`;
   statusBarItem.color = new vscode.ThemeColor('statusBarItem.errorForeground');
   statusBarItem.tooltip = new vscode.MarkdownString(
-    `## ⚠️ Claude Relay Meter\n\n**错误：** ${errorMessage}\n\n点击刷新或检查设置`
+    `## ⚠️ ${t('tooltips.title')}\n\n**${t('errors.apiError')}：** ${errorMessage}\n\n${t('tooltips.clickToRefresh')}`
   );
   statusBarItem.show();
 }
@@ -98,9 +99,9 @@ export function showErrorStatus(
  */
 export function showLoadingStatus(statusBarItem: vscode.StatusBarItem): void {
   log('[状态栏] 显示加载状态');
-  statusBarItem.text = '$(sync~spin) 加载中...';
+  statusBarItem.text = `$(sync~spin) ${t('statusBar.loading')}`;
   statusBarItem.color = new vscode.ThemeColor('statusBarItem.foreground');
-  statusBarItem.tooltip = new vscode.MarkdownString('正在获取用量数据...');
+  statusBarItem.tooltip = new vscode.MarkdownString(t('statusBar.loading'));
   statusBarItem.show();
 }
 
@@ -144,54 +145,54 @@ function createTooltip(data: RelayApiResponse): vscode.MarkdownString {
   tooltip.supportThemeIcons = true;
 
   // 标题
-  tooltip.appendMarkdown('## ⚡ Claude Relay Meter\n\n');
+  tooltip.appendMarkdown(`## ${t('tooltips.title')}\n\n`);
 
   // 用户信息
-  tooltip.appendMarkdown(`**用户：** ${data.data.name}\n\n`);
+  tooltip.appendMarkdown(`**${t('tooltips.user')}：** ${data.data.name}\n\n`);
 
   // 每日费用限制
   tooltip.appendMarkdown('---\n\n');
-  tooltip.appendMarkdown('### 📊 每日费用限制\n\n');
+  tooltip.appendMarkdown(`### ${t('tooltips.dailyCostLimit')}\n\n`);
   tooltip.appendMarkdown(
-    `**使用情况：** ${dailyStats.formattedUsed} / ${dailyStats.formattedLimit}\n\n`
+    `**${t('tooltips.usageStatus')}：** ${dailyStats.formattedUsed} / ${dailyStats.formattedLimit}\n\n`
   );
-  tooltip.appendMarkdown(`**使用百分比：** ${getColoredPercentage(dailyStats)}\n\n`);
+  tooltip.appendMarkdown(`**${t('tooltips.percentage')}：** ${getColoredPercentage(dailyStats)}\n\n`);
 
   // 总费用限制
   if (totalStats.limit > 0) {
     tooltip.appendMarkdown('---\n\n');
-    tooltip.appendMarkdown('### 💰 总费用限制\n\n');
+    tooltip.appendMarkdown(`### ${t('tooltips.totalCostLimit')}\n\n`);
     tooltip.appendMarkdown(
-      `**使用情况：** ${totalStats.formattedUsed} / ${totalStats.formattedLimit}\n\n`
+      `**${t('tooltips.usageStatus')}：** ${totalStats.formattedUsed} / ${totalStats.formattedLimit}\n\n`
     );
-    tooltip.appendMarkdown(`**使用百分比：** ${getColoredPercentage(totalStats)}\n\n`);
+    tooltip.appendMarkdown(`**${t('tooltips.percentage')}：** ${getColoredPercentage(totalStats)}\n\n`);
   }
 
   // Opus 模型周费用限制
   if (opusStats.limit > 0) {
     tooltip.appendMarkdown('---\n\n');
-    tooltip.appendMarkdown('### 🚀 Opus 模型周费用限制\n\n');
+    tooltip.appendMarkdown(`### ${t('tooltips.opusWeeklyCostLimit')}\n\n`);
     tooltip.appendMarkdown(
-      `**使用情况：** ${opusStats.formattedUsed} / ${opusStats.formattedLimit}\n\n`
+      `**${t('tooltips.usageStatus')}：** ${opusStats.formattedUsed} / ${opusStats.formattedLimit}\n\n`
     );
-    tooltip.appendMarkdown(`**使用百分比：** ${getColoredPercentage(opusStats)}\n\n`);
+    tooltip.appendMarkdown(`**${t('tooltips.percentage')}：** ${getColoredPercentage(opusStats)}\n\n`);
   }
 
   // 其他信息
   tooltip.appendMarkdown('---\n\n');
-  tooltip.appendMarkdown('### 📈 其他统计\n\n');
-  tooltip.appendMarkdown(`**总请求数：** ${data.data.usage.total.requests.toLocaleString()}\n\n`);
-  tooltip.appendMarkdown(`**总 Token 数：** ${data.data.usage.total.allTokens.toLocaleString()}\n\n`);
+  tooltip.appendMarkdown(`### ${t('tooltips.otherStats')}\n\n`);
+  tooltip.appendMarkdown(`**${t('tooltips.totalRequests')}：** ${data.data.usage.total.requests.toLocaleString()}\n\n`);
+  tooltip.appendMarkdown(`**${t('tooltips.totalTokens')}：** ${data.data.usage.total.allTokens.toLocaleString()}\n\n`);
 
   // 操作按钮
   tooltip.appendMarkdown('---\n\n');
   tooltip.appendMarkdown(
-    '💡 **提示：** 点击状态栏刷新数据 | [打开设置](command:claude-relay-meter.openSettings)\n\n'
+    `${t('tooltips.tip')} **：** ${t('tooltips.clickToRefresh')} | [${t('commands.openSettings')}](command:claude-relay-meter.openSettings)\n\n`
   );
 
   // 更新时间
   const now = new Date().toLocaleString();
-  tooltip.appendMarkdown(`🕒 **更新时间：** ${now}\n\n`);
+  tooltip.appendMarkdown(`${t('tooltips.updateTime')} **：** ${now}\n\n`);
 
   return tooltip;
 }
@@ -230,14 +231,14 @@ export function showConfigPrompt(
   let tooltipMessage = '';
 
   if (missingConfig === 'apiUrl') {
-    statusText = '$(gear) 未配置 API URL';
-    tooltipMessage = '请先配置 API URL';
+    statusText = `$(gear) ${t('statusBar.notConfiguredApiUrl')}`;
+    tooltipMessage = t('tooltips.pleaseConfigureApiUrl');
   } else if (missingConfig === 'apiId') {
-    statusText = '$(gear) 未配置 API ID/Key';
-    tooltipMessage = '请先配置 API ID 或 API Key';
+    statusText = `$(gear) ${t('statusBar.notConfiguredApiId')}`;
+    tooltipMessage = t('tooltips.pleaseConfigureApiIdOrKey');
   } else {
-    statusText = '$(gear) Claude Relay Meter 需要配置';
-    tooltipMessage = '请先配置 API URL 和 API ID（或 API Key）';
+    statusText = `$(gear) ${t('statusBar.notConfigured')}`;
+    tooltipMessage = t('tooltips.pleaseConfigureFirst');
   }
 
   statusBarItem.text = statusText;
@@ -245,9 +246,8 @@ export function showConfigPrompt(
 
   const tooltip = new vscode.MarkdownString();
   tooltip.isTrusted = true;
-  tooltip.appendMarkdown('## ⚙️ Claude Relay Meter\n\n');
-  tooltip.appendMarkdown(`**需要配置**\n\n${tooltipMessage}\n\n`);
-  tooltip.appendMarkdown('[点击打开设置](command:claude-relay-meter.openSettings)\n\n');
+  tooltip.appendMarkdown(t('tooltips.needConfiguration', { message: tooltipMessage }));
+  tooltip.appendMarkdown(`\n\n[${t('tooltips.clickToConfigure')}](command:claude-relay-meter.openSettings)\n\n`);
   statusBarItem.tooltip = tooltip;
 
   statusBarItem.command = 'claude-relay-meter.openSettings';

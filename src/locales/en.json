@@ -1,0 +1,96 @@
+{
+  "statusBar": {
+    "loading": "Loading...",
+    "error": "Failed to fetch data",
+    "notConfigured": "Claude Relay Meter Configuration Required",
+    "notConfiguredApiUrl": "API URL Not Configured",
+    "notConfiguredApiId": "API ID/Key Not Configured",
+    "title": "Claude Relay Meter",
+    "initializing": "Claude Relay Meter",
+    "refreshData": "Refresh Data"
+  },
+  "commands": {
+    "refreshStats": "Refresh Statistics",
+    "openSettings": "Open Settings",
+    "selectLanguage": "Select Language",
+    "configureNow": "Configure Now",
+    "later": "Later",
+    "languageChanged": "Language changed to {language}. Interface will update automatically.",
+    "selectLanguagePrompt": "Select Claude Relay Meter Interface Language / 选择界面语言"
+  },
+  "notifications": {
+    "configInvalid": "Claude Relay Meter: {message}",
+    "dataRefreshed": "Data Refreshed",
+    "errorOccurred": "Claude Relay Meter: Failed to fetch data - {error}",
+    "retryOption": "Retry",
+    "openSettingsOption": "Open Settings"
+  },
+  "tooltips": {
+    "title": "⚡ Claude Relay Meter",
+    "user": "User",
+    "dailyCostLimit": "📊 Daily Cost Limit",
+    "totalCostLimit": "💰 Total Cost Limit",
+    "opusWeeklyCostLimit": "🚀 Opus Model Weekly Cost Limit",
+    "otherStats": "📈 Other Statistics",
+    "usageStatus": "Usage Status",
+    "usedAmount": "Usage",
+    "limitAmount": "Limit",
+    "percentage": "Usage Percentage",
+    "totalRequests": "Total Requests",
+    "totalTokens": "Total Tokens",
+    "clickToRefresh": "Click status bar to refresh data",
+    "clickToConfigure": "Click to open settings",
+    "tip": "💡 Tip",
+    "updateTime": "🕒 Update Time",
+    "needConfiguration": "⚙️ Claude Relay Meter\n\nConfiguration Required\n\n{message}",
+    "pleaseConfigureFirst": "Please configure API URL and API ID (or API Key) first",
+    "pleaseConfigureApiUrl": "Please configure API URL first",
+    "pleaseConfigureApiIdOrKey": "Please configure API ID or API Key first"
+  },
+  "errors": {
+    "invalidApiUrl": "Invalid API URL format",
+    "invalidApiId": "Invalid API ID format",
+    "invalidUuid": "Not a valid UUID format",
+    "networkError": "Network request failed",
+    "apiError": "API Error",
+    "requestFailed": "API request failed",
+    "activationFailed": "Claude Relay Meter activation failed: {error}",
+    "cannotGetApiIdFromKey": "Unable to get API ID from API Key: {error}"
+  },
+  "logs": {
+    "activating": "Claude Relay Meter extension activating...",
+    "activationComplete": "Extension activation complete",
+    "statusBarCreated": "Status bar item created and displayed",
+    "configInvalid": "Configuration invalid - {message}",
+    "configValid": "Configuration valid, fetching data...",
+    "fetchingData": "Refreshing statistics...",
+    "dataFetched": "Statistics updated successfully",
+    "windowFocused": "Window focused, refreshing data",
+    "configChanged": "Configuration changed, refreshing data",
+    "manualRefresh": "Manual refresh triggered",
+    "openingSettings": "Opening settings",
+    "timerStarted": "Refresh timer started, interval: {interval} seconds",
+    "i18nInitialized": "Internationalization system initialized",
+    "languageChanged": "Language changed: {language}"
+  },
+  "api": {
+    "requestingUserStats": "Requesting user stats, URL: {url}/apiStats/api/user-stats",
+    "requestSuccess": "API request successful",
+    "requestFailed": "API request failed: {error}",
+    "retrying": "Retrying API request (attempt {attempt} of {max})",
+    "retryAttempt": "Retry attempt {attempt}, delay {delay}ms",
+    "validatingConfig": "Validating API configuration...",
+    "gettingApiIdFromKey": "API Key detected, attempting to get API ID..."
+  },
+  "settings": {
+    "apiUrl": "Relay service API base URL / 中继服务 API 基础地址",
+    "apiId": "User API identifier (UUID format) / 用户 API 标识符",
+    "apiKey": "User API Key / 用户 API Key",
+    "refreshInterval": "Data refresh interval (seconds) / 数据更新频率（秒）",
+    "enableStatusBarColors": "Enable colored status bar based on usage percentage / 启用根据使用百分比变化的状态栏颜色",
+    "colorThresholds": "Color threshold configuration / 颜色阈值配置",
+    "customColors": "Custom color configuration / 自定义颜色配置",
+    "enableLogging": "Enable detailed logging for debugging / 启用详细日志记录以便调试",
+    "language": "Extension interface language / 扩展界面语言"
+  }
+}

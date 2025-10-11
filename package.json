@@ -2,7 +2,7 @@
   "name": "claude-relay-meter",
   "displayName": "Claude Relay Meter",
   "description": "用于监测 Claude Relay Service 中继服务用量的 VSCode 插件",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "publisher": "claude-relay-meter",
   "repository": {
     "type": "git",
@@ -30,13 +30,18 @@
     "commands": [
       {
         "command": "claude-relay-meter.refreshStats",
-        "title": "Claude Relay Meter: 刷新统计数据",
+        "title": "Claude Relay Meter: Refresh Statistics / 刷新统计数据",
         "icon": "$(sync)"
       },
       {
         "command": "claude-relay-meter.openSettings",
-        "title": "Claude Relay Meter: 打开设置",
+        "title": "Claude Relay Meter: Open Settings / 打开设置",
         "icon": "$(gear)"
+      },
+      {
+        "command": "claude-relay-meter.selectLanguage",
+        "title": "Claude Relay Meter: Select Language / 选择语言",
+        "icon": "$(globe)"
       }
     ],
     "configuration": [
@@ -124,7 +129,21 @@
           "relayMeter.enableLogging": {
             "type": "boolean",
             "default": true,
-            "description": "启用详细日志记录以便调试",
+            "description": "启用详细日志记录以便调试 / Enable detailed logging for debugging",
+            "scope": "window"
+          },
+          "relayMeter.language": {
+            "type": "string",
+            "default": "zh",
+            "enum": [
+              "zh",
+              "en"
+            ],
+            "enumDescriptions": [
+              "中文 (Chinese)",
+              "English"
+            ],
+            "description": "扩展界面语言 / Extension interface language",
             "scope": "window"
           }
         }
@@ -133,7 +152,8 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
+    "compile": "tsc -p ./ && npm run copy-locales",
+    "copy-locales": "node -e \"const fs=require('fs'),path=require('path'); const src='src/locales',dest='out/locales'; if(fs.existsSync(src)){fs.mkdirSync(dest,{recursive:true}); fs.readdirSync(src).forEach(file=>fs.copyFileSync(path.join(src,file),path.join(dest,file))); console.log('Locales copied to out/locales');}\"",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile",
     "lint": "eslint src --ext ts",

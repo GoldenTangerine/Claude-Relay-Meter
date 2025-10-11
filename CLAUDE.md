@@ -4,14 +4,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Claude Relay Meter is a VSCode extension (中文项目) that monitors Claude Relay Service usage statistics and displays them in the VSCode status bar. The extension fetches usage data from a relay service API and provides real-time monitoring with color-coded visual feedback based on usage thresholds.
+Claude Relay Meter is a multilingual VSCode extension that monitors Claude Relay Service usage statistics and displays them in the VSCode status bar. The extension fetches usage data from a relay service API and provides real-time monitoring with color-coded visual feedback based on usage thresholds.
+
+**Supported Languages:** Chinese (中文) and English, with full i18n support.
 
 ## Development Commands
 
 ### Build and Development
 ```bash
 npm install              # Install dependencies
-npm run compile          # Compile TypeScript to JavaScript
+npm run compile          # Compile TypeScript + copy locale files to out/
+npm run copy-locales     # Copy locale JSON files to out/locales/
 npm run watch            # Watch mode for development
 npm run lint             # Run ESLint on TypeScript files
 npm run package          # Package extension as .vsix file
@@ -30,9 +33,10 @@ The extension is published as a `.vsix` file. After making changes:
 
 **Extension Lifecycle ([src/extension.ts](src/extension.ts))**
 - Entry point managing activation/deactivation
-- Registers commands: `refreshStats` and `openSettings`
+- Initializes i18n system on startup
+- Registers commands: `refreshStats`, `openSettings`, and `selectLanguage`
 - Manages timer-based auto-refresh with window focus awareness
-- Handles configuration changes and re-initialization
+- Handles configuration changes (including language switching) and re-initialization
 - Configuration namespace: `relayMeter.*`
 
 **API Service ([src/services/api.ts](src/services/api.ts))**
@@ -55,13 +59,16 @@ The extension is published as a `.vsix` file. After making changes:
   - Total requests/tokens
 - Supports multiple states: loading, error, config prompt, normal display
 
-**Type Definitions ([src/interfaces/types.ts](src/interfaces/types.ts))**
-- `RelayApiResponse`: Root API response structure
-- `RelayUserData`: User account data with usage, limits, permissions
-- `LimitsData`: All cost/rate limits (daily, total, weekly Opus)
-- `StatusBarConfig`: Extension configuration interface (includes apiId and apiKey)
-- `ApiKeyResponse`: Response interface for API Key to ID conversion
-- `CostStats`: Computed statistics for display
+**Type Definitions**
+- [src/interfaces/types.ts](src/interfaces/types.ts): API and configuration types
+  - `RelayApiResponse`: Root API response structure
+  - `RelayUserData`: User account data with usage, limits, permissions
+  - `LimitsData`: All cost/rate limits (daily, total, weekly Opus)
+  - `StatusBarConfig`: Extension configuration interface (includes apiId and apiKey)
+  - `ApiKeyResponse`: Response interface for API Key to ID conversion
+  - `CostStats`: Computed statistics for display
+- [src/interfaces/i18n.ts](src/interfaces/i18n.ts): Internationalization types
+  - `LanguagePack`: Complete language pack interface structure
 
 ### Utilities
 
@@ -83,6 +90,14 @@ The extension is published as a `.vsix` file. After making changes:
 - Reads from `relayMeter.colorThresholds` and `relayMeter.customColors`
 - Can be disabled via `relayMeter.enableStatusBarColors`
 
+**Internationalization ([src/utils/i18n.ts](src/utils/i18n.ts))**
+- Manages multilingual support for the extension
+- Loads language packs from `src/locales/*.json`
+- Provides `t(key, params)` function for translations with parameter substitution
+- Supports automatic fallback to Chinese if translation missing
+- Monitors `relayMeter.language` setting changes for real-time language switching
+- Callback system notifies other components when language changes
+
 ## Configuration Structure
 
 All settings under `relayMeter.*` namespace:
@@ -101,6 +116,7 @@ All settings under `relayMeter.*` namespace:
 - `colorThresholds`: `{ low: number, medium: number }` (default: 50, 80)
 - `customColors`: `{ low: string, medium: string, high: string }` (hex colors)
 - `enableLogging`: Detailed logging (default: true)
+- `language`: Interface language - `"zh"` (Chinese, default) or `"en"` (English)
 
 ## Key Behaviors
 
@@ -140,18 +156,72 @@ All settings under `relayMeter.*` namespace:
 ```
 src/
 ├── extension.ts              # Main entry point
+├── locales/                  # Language pack files
+│   ├── zh.json              # Chinese translations
+│   └── en.json              # English translations
 ├── services/
 │   └── api.ts               # API communication
 ├── handlers/
 │   └── statusBar.ts         # Status bar management
 ├── interfaces/
-│   └── types.ts             # TypeScript interfaces
+│   ├── types.ts             # Core TypeScript interfaces
+│   └── i18n.ts              # Internationalization interfaces
 └── utils/
     ├── logger.ts            # Logging utilities
     ├── formatter.ts         # Number/text formatting
-    └── colorHelper.ts       # Color computation
+    ├── colorHelper.ts       # Color computation
+    └── i18n.ts              # Internationalization system
 ```
 
-## Language and Documentation
+## Internationalization (i18n)
 
-This is primarily a Chinese-language project. All user-facing strings (status bar text, error messages, tooltips, settings descriptions) are in Chinese. Code comments and documentation use Chinese. Keep this consistency when adding features.
+### Supported Languages
+
+- **Chinese (中文)**: Default language, complete translations
+- **English**: Full UI translation available
+
+### Language Pack Structure
+
+Language packs are JSON files in `src/locales/` with the following structure:
+- `statusBar`: Status bar text (loading, errors, configuration prompts)
+- `commands`: Command names and messages
+- `notifications`: User notification messages
+- `tooltips`: Hover tooltip content
+- `errors`: Error messages
+- `logs`: Development/debug log messages
+- `api`: API-related messages
+- `settings`: Configuration descriptions
+
+### Adding New Languages
+
+1. Create `src/locales/{code}.json` (e.g., `ja.json` for Japanese)
+2. Copy structure from `zh.json` or `en.json`
+3. Translate all strings
+4. Update `supportedLanguages` array in `src/utils/i18n.ts`
+5. Add to `language` enum in `package.json`
+
+### Using Translations in Code
+
+```typescript
+import { t } from './utils/i18n';
+
+// Simple translation
+const message = t('statusBar.loading');
+
+// Translation with parameters
+const error = t('errors.apiError', { message: errorMsg });
+
+// Nested keys
+const tooltip = t('tooltips.dailyCostLimit');
+```
+
+### Translation Keys Best Practices
+
+- Use dot notation for nested keys: `category.subcategory.key`
+- Keep keys descriptive and semantic
+- Always provide fallback to Chinese if translation missing
+- Use parameters `{paramName}` for dynamic content
+
+## Code Comments and Documentation
+
+Code comments use Chinese. External documentation (README, CLAUDE.md) uses English. User-facing strings support both languages through the i18n system.
