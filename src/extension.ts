@@ -33,43 +33,38 @@ export async function activate(context: vscode.ExtensionContext) {
     // ⚠️ 关键修改：必须首先初始化日志系统，然后才能调用 log()
     initializeLogging(context);
 
-    log('[激活] 插件开始激活...');
-    log('[激活] VSCode 版本要求: ^1.96.0');
+    log('[激活] Claude Relay Meter 插件激活中...');
 
     // 创建状态栏项
-    log('[状态栏] 开始创建状态栏项...');
     statusBarItem = createStatusBarItem();
     context.subscriptions.push(statusBarItem);
-    log('[状态栏] 状态栏项创建成功');
 
-    // 显式显示状态栏项（确保可见）
+    // ⚠️ 关键：立即显示状态栏项，确保用户能看到
+    // 即使配置无效，状态栏也应该显示提示
+    statusBarItem.text = '$(sync~spin) Claude Relay Meter';
     statusBarItem.show();
-    log('[状态栏] 状态栏项已显示');
+    log('[状态栏] 状态栏项已创建并显示');
 
     // 注册命令
-    log('[命令] 开始注册命令...');
     registerCommands(context);
 
     // 监听配置变更
-    log('[配置] 开始注册配置监听器...');
     registerConfigurationListener(context);
 
     // 监听窗口焦点变化
-    log('[窗口] 开始注册窗口焦点监听器...');
     registerWindowFocusListener(context);
 
     // 获取配置并验证
-    log('[配置] 读取并验证配置...');
     const config = getConfiguration();
-    log(`[配置] API URL: ${config.apiUrl ? '已配置' : '未配置'}`);
-    log(`[配置] API ID: ${config.apiId ? '已配置' : '未配置'}`);
-    log(`[配置] API Key: ${config.apiKey ? '已配置' : '未配置'}`);
+    log(`[配置] API URL: ${config.apiUrl ? '已配置' : '未配置'}, API ID: ${config.apiId ? '已配置' : '未配置'}, API Key: ${config.apiKey ? '已配置' : '未配置'}`);
 
     const validation = validateApiConfig(config.apiUrl, config.apiId);
 
     if (!validation.valid) {
       // 配置无效，显示配置提示
-      log(`[激活] 配置无效：${validation.message}`);
+      log(`[激活] 配置无效 - ${validation.message}`);
+
+      // ⚠️ 关键：显示配置提示状态栏（这会确保状态栏可见）
       showConfigPrompt(statusBarItem, validation.missingConfig);
 
       // 显示更友好的首次配置提示
@@ -86,7 +81,7 @@ export async function activate(context: vscode.ExtensionContext) {
         });
     } else {
       // 配置有效，开始更新数据
-      log('[激活] 配置有效，开始初始化更新...');
+      log('[激活] 配置有效，开始获取数据...');
 
       // 显示加载状态
       showLoadingStatus(statusBarItem);
@@ -98,7 +93,7 @@ export async function activate(context: vscode.ExtensionContext) {
       startRefreshTimer();
     }
 
-    log('[激活] ✓ 插件激活成功！');
+    log('[激活] 插件激活完成');
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logError('[激活] ✗ 插件激活失败', error as Error);
@@ -134,8 +129,6 @@ export function deactivate() {
  * @param context - VSCode 扩展上下文
  */
 function registerCommands(context: vscode.ExtensionContext): void {
-  log('[命令] 注册命令...');
-
   // 刷新统计命令
   const refreshCommand = vscode.commands.registerCommand(
     'claude-relay-meter.refreshStats',
@@ -152,13 +145,12 @@ function registerCommands(context: vscode.ExtensionContext): void {
       log('[命令] 打开设置');
       vscode.commands.executeCommand(
         'workbench.action.openSettings',
-        '@ext:your-publisher-name.claude-relay-meter'
+        'relayMeter'
       );
     }
   );
 
   context.subscriptions.push(refreshCommand, openSettingsCommand);
-  log('[命令] 命令注册完成');
 }
 
 /**
@@ -170,7 +162,7 @@ function registerConfigurationListener(context: vscode.ExtensionContext): void {
     async (event) => {
       // 检查是否是插件相关的配置变更
       if (event.affectsConfiguration('relayMeter')) {
-        log('[配置] 检测到配置变更');
+        log('[配置] 配置变更，刷新数据');
 
         // 重启定时器
         startRefreshTimer();
@@ -182,7 +174,6 @@ function registerConfigurationListener(context: vscode.ExtensionContext): void {
   );
 
   context.subscriptions.push(configListener);
-  log('[配置] 配置监听器注册完成');
 }
 
 /**
@@ -194,24 +185,15 @@ function registerWindowFocusListener(context: vscode.ExtensionContext): void {
     const wasFocused = isWindowFocused;
     isWindowFocused = state.focused;
 
-    log(`[窗口] 窗口焦点变化：${wasFocused ? '有焦点' : '无焦点'} -> ${isWindowFocused ? '有焦点' : '无焦点'}`);
-
     if (isWindowFocused && !wasFocused) {
       // 窗口重新获得焦点，刷新数据
-      log('[窗口] 窗口重新获得焦点，刷新数据');
+      log('[窗口] 窗口获得焦点，刷新数据');
       updateStats();
       startRefreshTimer();
-    } else if (!isWindowFocused && wasFocused) {
-      // 窗口失去焦点，暂停刷新（可选）
-      log('[窗口] 窗口失去焦点');
-      // 注意：这里不停止定时器，让它继续在后台运行
-      // 如果想在失去焦点时暂停，可以取消下面的注释
-      // stopRefreshTimer();
     }
   });
 
   context.subscriptions.push(focusListener);
-  log('[窗口] 窗口焦点监听器注册完成');
 }
 
 /**

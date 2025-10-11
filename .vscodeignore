@@ -8,16 +8,8 @@ tsconfig.json
 .claude/**
 
 # 构建和依赖
-node_modules/**
-!node_modules/axios/**
-!node_modules/follow-redirects/**
-!node_modules/form-data/**
-!node_modules/asynckit/**
-!node_modules/combined-stream/**
-!node_modules/delayed-stream/**
-!node_modules/mime-types/**
-!node_modules/mime-db/**
-!node_modules/proxy-from-env/**
+# 注意：不排除 node_modules，让 vsce 自动包含所有生产依赖
+# 这样可以确保所有嵌套依赖都被正确打包
 
 # Git 相关
 .git/**

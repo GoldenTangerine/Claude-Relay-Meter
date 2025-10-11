@@ -17,7 +17,7 @@ export function initializeLogging(context: vscode.ExtensionContext): void {
       outputChannel = vscode.window.createOutputChannel('Claude Relay Meter');
       context.subscriptions.push(outputChannel);
       // 使用 safeLog 避免递归调用问题
-      safeLog('[初始化] 日志系统已成功创建', false);
+      safeLog('[初始化] Claude Relay Meter 日志系统已启动', false);
     }
   } catch (error) {
     // 如果创建失败，至少记录到控制台

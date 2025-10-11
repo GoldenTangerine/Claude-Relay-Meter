@@ -226,18 +226,34 @@ export function showConfigPrompt(
   log(`[状态栏] 显示配置提示，缺失配置：${missingConfig || 'both'}`);
 
   // 根据缺失的配置项设置不同的文本
+  let statusText = '';
+  let tooltipMessage = '';
+
   if (missingConfig === 'apiUrl') {
-    statusBarItem.text = '$(gear) 未配置 API URL';
+    statusText = '$(gear) 未配置 API URL';
+    tooltipMessage = '请先配置 API URL';
   } else if (missingConfig === 'apiId') {
-    statusBarItem.text = '$(gear) 未配置 API ID';
+    statusText = '$(gear) 未配置 API ID/Key';
+    tooltipMessage = '请先配置 API ID 或 API Key';
   } else {
-    statusBarItem.text = '$(gear) 需要配置';
+    statusText = '$(gear) Claude Relay Meter 需要配置';
+    tooltipMessage = '请先配置 API URL 和 API ID（或 API Key）';
   }
 
+  statusBarItem.text = statusText;
   statusBarItem.color = new vscode.ThemeColor('statusBarItem.warningForeground');
-  statusBarItem.tooltip = new vscode.MarkdownString(
-    '## ⚙️ Claude Relay Meter\n\n**需要配置**\n\n请先配置 API URL 和 API ID\n\n[打开设置](command:claude-relay-meter.openSettings)'
-  );
+
+  const tooltip = new vscode.MarkdownString();
+  tooltip.isTrusted = true;
+  tooltip.appendMarkdown('## ⚙️ Claude Relay Meter\n\n');
+  tooltip.appendMarkdown(`**需要配置**\n\n${tooltipMessage}\n\n`);
+  tooltip.appendMarkdown('[点击打开设置](command:claude-relay-meter.openSettings)\n\n');
+  statusBarItem.tooltip = tooltip;
+
   statusBarItem.command = 'claude-relay-meter.openSettings';
+
+  // 确保状态栏项可见
   statusBarItem.show();
+
+  log(`[状态栏] 配置提示已设置：${statusText}`);
 }

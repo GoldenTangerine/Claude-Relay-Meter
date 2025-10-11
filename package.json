@@ -3,7 +3,7 @@
   "displayName": "Claude Relay Meter",
   "description": "用于监测 Claude Relay Service 中继服务用量的 VSCode 插件",
   "version": "1.0.0",
-  "publisher": "your-publisher-name",
+  "publisher": "claude-relay-meter",
   "repository": {
     "type": "git",
     "url": "https://github.com/your-username/claude-relay-meter"
