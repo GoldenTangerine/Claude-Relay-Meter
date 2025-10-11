@@ -1,5 +1,60 @@
-<svg width="128" height="128" xmlns="http://www.w3.org/2000/svg">
-  <rect width="128" height="128" fill="#4A90E2"/>
-  <text x="64" y="64" font-size="48" fill="white" text-anchor="middle" dominant-baseline="middle" font-family="Arial, sans-serif" font-weight="bold">CR</text>
-  <text x="64" y="100" font-size="14" fill="white" text-anchor="middle" font-family="Arial, sans-serif">METER</text>
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景 - 圆角矩形，淡紫色调 -->
+  <rect width="128" height="128" rx="28" ry="28" fill="#E8E5F3"/>
+
+  <!-- 云朵主体 - 居中 -->
+  <g transform="translate(64, 50)">
+    <!-- 主云朵 - 深紫色 -->
+    <path d="M -36 0
+             C -36 -6 -32 -10 -26 -10
+             C -24 -16 -18 -20 -11 -20
+             C -2 -20 5 -14 6 -6
+             C 12 -6 17 -1 17 5
+             C 17 11 12 16 6 16
+             L -30 16
+             C -36 16 -40 12 -40 6
+             C -40 3 -38 1 -36 0 Z"
+          fill="#5B4E8B" opacity="0.95"/>
+
+    <!-- 中转箭头 - 横穿云朵中间 -->
+    <g transform="translate(-25, 2)">
+      <!-- 左侧小圆点 -->
+      <circle cx="0" cy="0" r="2.5" fill="#D5CFE8"/>
+
+      <!-- 左箭头线 -->
+      <path d="M 3 0 L 18 0"
+            stroke="#D5CFE8"
+            stroke-width="3"
+            fill="none"
+            stroke-linecap="round"/>
+
+      <!-- 中间圆圈 (中转节点) -->
+      <circle cx="25" cy="0" r="5" fill="none" stroke="#D5CFE8" stroke-width="2.5"/>
+      <circle cx="25" cy="0" r="2" fill="#D5CFE8"/>
+
+      <!-- 右箭头线 -->
+      <path d="M 32 0 L 47 0"
+            stroke="#D5CFE8"
+            stroke-width="3"
+            fill="none"
+            stroke-linecap="round"/>
+
+      <!-- 右箭头头部 -->
+      <path d="M 43 -3.5 L 50 0 L 43 3.5"
+            stroke="#D5CFE8"
+            stroke-width="3"
+            fill="none"
+            stroke-linecap="round"
+            stroke-linejoin="round"/>
+    </g>
+  </g>
+
+  <!-- 底部插件名称 -->
+  <text x="64" y="100"
+        font-size="10"
+        fill="#5B4E8B"
+        text-anchor="middle"
+        font-family="Arial, -apple-system, BlinkMacSystemFont, sans-serif"
+        font-weight="600"
+        letter-spacing="0.5">Claude Relay Meter</text>
 </svg>
