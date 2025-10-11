@@ -40,6 +40,7 @@
     "totalTokens": "Total Tokens",
     "clickToRefresh": "Click status bar to refresh data",
     "clickToConfigure": "Click to open settings",
+    "openWebDashboard": "Web Dashboard",
     "tip": "💡 Tip",
     "updateTime": "🕒 Update Time",
     "needConfiguration": "⚙️ Claude Relay Meter\n\nConfiguration Required\n\n{message}",

@@ -34,10 +34,14 @@ export function createStatusBarItem(): vscode.StatusBarItem {
  * 更新状态栏显示
  * @param statusBarItem - 状态栏项实例
  * @param data - API 响应数据
+ * @param apiUrl - API 基础地址
+ * @param apiId - API 标识符
  */
 export function updateStatusBar(
   statusBarItem: vscode.StatusBarItem,
-  data: RelayApiResponse
+  data: RelayApiResponse,
+  apiUrl: string,
+  apiId: string
 ): void {
   try {
     log('[状态栏] 开始更新状态栏显示...');
@@ -58,7 +62,7 @@ export function updateStatusBar(
     statusBarItem.color = getStatusBarColor(dailyStats.percentage);
 
     // 创建并设置悬停提示
-    const tooltip = createTooltip(data);
+    const tooltip = createTooltip(data, apiUrl, apiId);
     statusBarItem.tooltip = tooltip;
 
     // 显示状态栏项
@@ -128,9 +132,11 @@ function calculateCostStats(used: number, limit: number): CostStats {
 /**
  * 创建悬停提示
  * @param data - API 响应数据
+ * @param apiUrl - API 基础地址
+ * @param apiId - API 标识符
  * @returns Markdown 格式的提示文本
  */
-function createTooltip(data: RelayApiResponse): vscode.MarkdownString {
+function createTooltip(data: RelayApiResponse, apiUrl: string, apiId: string): vscode.MarkdownString {
   const limits = data.data.limits;
 
   // 计算三种费用统计
@@ -186,8 +192,19 @@ function createTooltip(data: RelayApiResponse): vscode.MarkdownString {
 
   // 操作按钮
   tooltip.appendMarkdown('---\n\n');
+
+  // 构建网页仪表板地址
+  const webDashboardUrl = `${apiUrl}/admin-next/api-stats?apiId=${apiId}`;
+  const webDashboardArgs = encodeURIComponent(JSON.stringify({ url: webDashboardUrl }));
+
+  // 第一行：提示文本
   tooltip.appendMarkdown(
-    `${t('tooltips.tip')} **：** ${t('tooltips.clickToRefresh')} | [${t('commands.openSettings')}](command:claude-relay-meter.openSettings)\n\n`
+    `${t('tooltips.tip')} **：** ${t('tooltips.clickToRefresh')}\n\n`
+  );
+
+  // 第二行：操作按钮
+  tooltip.appendMarkdown(
+    `[${t('commands.openSettings')}](command:claude-relay-meter.openSettings) | [${t('tooltips.openWebDashboard')}](command:claude-relay-meter.openWebDashboard?${webDashboardArgs})\n\n`
   );
 
   // 更新时间

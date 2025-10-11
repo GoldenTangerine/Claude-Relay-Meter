@@ -184,7 +184,18 @@ function registerCommands(context: vscode.ExtensionContext): void {
     }
   );
 
-  context.subscriptions.push(refreshCommand, openSettingsCommand, selectLanguageCommand);
+  // 打开网页仪表板命令
+  const openWebDashboardCommand = vscode.commands.registerCommand(
+    'claude-relay-meter.openWebDashboard',
+    async (args?: { url: string }) => {
+      if (args && args.url) {
+        log(`[命令] 打开网页仪表板：${args.url}`);
+        await vscode.env.openExternal(vscode.Uri.parse(args.url));
+      }
+    }
+  );
+
+  context.subscriptions.push(refreshCommand, openSettingsCommand, selectLanguageCommand, openWebDashboardCommand);
 }
 
 /**
@@ -275,7 +286,7 @@ async function updateStats(): Promise<void> {
     );
 
     // 更新状态栏
-    updateStatusBar(statusBarItem, data);
+    updateStatusBar(statusBarItem, data, config.apiUrl, actualApiId);
 
     log(t('logs.dataFetched'));
   } catch (error) {

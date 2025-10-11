@@ -137,6 +137,7 @@ $(graph) $3.96/$100.00 3.96%
 - 📊 **每日费用限制**：显示每日费用使用情况及百分比
 - 💰 **总费用限制**：显示总费用使用情况及百分比
 - 🚀 **Opus 模型周费用限制**：显示 Opus 模型的周费用使用情况及百分比
+- 🌐 **网页仪表板**：点击"网页仪表板"按钮可在浏览器中打开完整的统计页面
 
 #### 手动刷新
 
@@ -194,6 +195,11 @@ $(graph) $3.96/$100.00 3.96%
 MIT License
 
 ### 更新日志
+
+#### v1.0.3 (2025-10-11)
+- ✨ **新增**：网页仪表板快捷入口
+- 🎨 **改进**：优化悬浮窗操作按钮布局（两行显示）
+- 🛠️ **技术**：新增 openWebDashboard 命令
 
 #### v1.0.2 (2025-10-11)
 - 🌐 **新增**：完整的国际化支持（中文/英文）
@@ -346,6 +352,7 @@ Hover your mouse over the status bar item to view detailed cost information:
 - 📊 **Daily Cost Limit**: Shows daily cost usage and percentage
 - 💰 **Total Cost Limit**: Shows total cost usage and percentage
 - 🚀 **Opus Model Weekly Cost Limit**: Shows Opus model weekly cost usage and percentage
+- 🌐 **Web Dashboard**: Click "Web Dashboard" button to open full statistics page in browser
 
 #### Manual Refresh
 
@@ -403,6 +410,11 @@ If you encounter any issues or have suggestions:
 MIT License
 
 ### Changelog
+
+#### v1.0.3 (2025-10-11)
+- ✨ **Added**: Web dashboard quick access button
+- 🎨 **Improved**: Optimized tooltip action button layout (two-line display)
+- 🛠️ **Technical**: Added openWebDashboard command
 
 #### v1.0.2 (2025-10-11)
 - 🌐 **Added**: Complete internationalization support (Chinese/English)
