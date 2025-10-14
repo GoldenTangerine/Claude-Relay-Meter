@@ -121,3 +121,40 @@ export function formatTooltipLine(
 export function formatWithThousandsSeparator(num: number): string {
   return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
+
+/**
+ * 格式化大数字，自动转换为带单位的形式（K/M/B）
+ * @param num - 需要格式化的数字
+ * @returns 格式化后的字符串
+ *
+ * 示例：
+ * formatLargeNumber(999) => "999"
+ * formatLargeNumber(4042) => "4K"
+ * formatLargeNumber(171659455) => "171.7M"
+ * formatLargeNumber(1500000000) => "1.5B"
+ */
+export function formatLargeNumber(num: number): string {
+  if (num < 1000) {
+    return num.toString();
+  }
+
+  const units = [
+    { threshold: 1e9, suffix: 'B' },  // Billion
+    { threshold: 1e6, suffix: 'M' },  // Million
+    { threshold: 1e3, suffix: 'K' }   // Thousand
+  ];
+
+  for (const { threshold, suffix } of units) {
+    if (num >= threshold) {
+      const value = num / threshold;
+      // 数值 < 10 时保留2位小数，>= 10 时保留1位小数
+      const decimals = value < 10 ? 2 : 1;
+      const rounded = Math.round(value * Math.pow(10, decimals)) / Math.pow(10, decimals);
+      // 去除末尾的零
+      const formatted = Number(rounded.toFixed(decimals)).toString();
+      return `${formatted}${suffix}`;
+    }
+  }
+
+  return num.toString();
+}

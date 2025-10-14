@@ -5,7 +5,7 @@
 
 import * as vscode from 'vscode';
 import { RelayApiResponse, CostStats } from '../interfaces/types';
-import { formatCost, formatPercentage, formatTooltipLine } from '../utils/formatter';
+import { formatCost, formatPercentage, formatTooltipLine, formatLargeNumber } from '../utils/formatter';
 import { getStatusBarColor } from '../utils/colorHelper';
 import { log } from '../utils/logger';
 import { t } from '../utils/i18n';
@@ -187,8 +187,8 @@ function createTooltip(data: RelayApiResponse, apiUrl: string, apiId: string): v
   // 其他信息
   tooltip.appendMarkdown('---\n\n');
   tooltip.appendMarkdown(`### ${t('tooltips.otherStats')}\n\n`);
-  tooltip.appendMarkdown(`**${t('tooltips.totalRequests')}：** ${data.data.usage.total.requests.toLocaleString()}\n\n`);
-  tooltip.appendMarkdown(`**${t('tooltips.totalTokens')}：** ${data.data.usage.total.allTokens.toLocaleString()}\n\n`);
+  tooltip.appendMarkdown(`**${t('tooltips.totalRequests')}：** ${formatLargeNumber(data.data.usage.total.requests)}\n\n`);
+  tooltip.appendMarkdown(`**${t('tooltips.totalTokens')}：** ${formatLargeNumber(data.data.usage.total.allTokens)}\n\n`);
 
   // 操作按钮
   tooltip.appendMarkdown('---\n\n');
