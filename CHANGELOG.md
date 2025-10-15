@@ -2,6 +2,32 @@
 
 所有关于此项目的重要更改都将记录在此文件中。
 
+## [1.0.7] - 2025-10-15
+
+### 🐛 修复
+- **API Key 转换优化**
+  - 修复 API Key 到 API ID 转换接口路径错误
+  - 正确的接口路径：`/apiStats/api/get-key-id`（而非 `/api/get-key-id`）
+  - 修复响应数据字段映射：使用 `data.id` 代替 `data.apiId`
+
+- **配置验证逻辑改进**
+  - 优化 API 配置验证顺序，提升用户体验
+  - 仅在提供 API ID 时才验证 UUID 格式
+  - API Key 格式验证交由服务端处理，避免客户端限制
+  - 改进错误提示文案，明确 API ID 和 API Key 二选一的逻辑
+
+### 🛠️ 技术改进
+- 更新 `validateApiConfig()` 函数签名，增加 `apiKey` 可选参数
+- 优化 `updateStats()` 函数中配置验证时机
+- 在获取 API ID 前先进行基础配置验证
+- 更新 [src/interfaces/types.ts](src/interfaces/types.ts) 中 `ApiKeyResponse` 接口定义
+- 改进中英文语言包中的配置提示文案
+
+### 📝 文档更新
+- 明确配置说明："API URL（必填）+ API ID 或 API Key（二选一）"
+
+---
+
 ## [1.0.6] - 2025-10-15
 
 ### 🎨 改进

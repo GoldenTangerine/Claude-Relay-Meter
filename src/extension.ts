@@ -71,7 +71,7 @@ export async function activate(context: vscode.ExtensionContext) {
     const config = getConfiguration();
     log(`[配置] API URL: ${config.apiUrl ? '已配置' : '未配置'}, API ID: ${config.apiId ? '已配置' : '未配置'}, API Key: ${config.apiKey ? '已配置' : '未配置'}`);
 
-    const validation = validateApiConfig(config.apiUrl, config.apiId);
+    const validation = validateApiConfig(config.apiUrl, config.apiId, config.apiKey);
 
     if (!validation.valid) {
       // 配置无效，显示配置提示
@@ -251,6 +251,14 @@ async function updateStats(): Promise<void> {
     // 获取配置
     const config = getConfiguration();
 
+    // 先验证基础配置（API URL 和 API ID/Key 至少一个存在）
+    const validation = validateApiConfig(config.apiUrl, config.apiId, config.apiKey);
+    if (!validation.valid) {
+      log(t('logs.configInvalid', { message: validation.message || '' }), true);
+      showConfigPrompt(statusBarItem, validation.missingConfig);
+      return;
+    }
+
     // 获取实际的 API ID（优先使用 apiId，其次使用 apiKey 转换）
     let actualApiId = config.apiId;
 
@@ -264,14 +272,6 @@ async function updateStats(): Promise<void> {
         logError('[更新] 通过 API Key 获取 API ID 失败', error as Error);
         throw new Error(t('errors.cannotGetApiIdFromKey', { error: (error as Error).message }));
       }
-    }
-
-    // 验证配置
-    const validation = validateApiConfig(config.apiUrl, actualApiId);
-    if (!validation.valid) {
-      log(t('logs.configInvalid', { message: validation.message || '' }), true);
-      showConfigPrompt(statusBarItem, validation.missingConfig);
-      return;
     }
 
     // 显示加载状态

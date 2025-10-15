@@ -45,9 +45,9 @@
     "tip": "Tip",
     "updateTime": "Update Time",
     "needConfiguration": "⚙️ Claude Relay Meter\n\nConfiguration Required\n\n{message}",
-    "pleaseConfigureFirst": "Please configure API URL and API ID (or API Key) first",
-    "pleaseConfigureApiUrl": "Please configure API URL first",
-    "pleaseConfigureApiIdOrKey": "Please configure API ID or API Key first"
+    "pleaseConfigureFirst": "Please configure API URL (required) and either API ID or API Key (choose one)",
+    "pleaseConfigureApiUrl": "Please configure API URL (required)",
+    "pleaseConfigureApiIdOrKey": "Please configure either API ID or API Key (choose one)"
   },
   "errors": {
     "invalidApiUrl": "Invalid API URL format",

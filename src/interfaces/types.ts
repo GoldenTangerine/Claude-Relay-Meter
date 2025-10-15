@@ -129,7 +129,7 @@ export interface StatusBarConfig {
 export interface ApiKeyResponse {
   success: boolean;
   data?: {
-    apiId: string;
+    id: string;
   };
   message?: string;
 }

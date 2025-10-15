@@ -92,26 +92,30 @@ export async function fetchRelayStats(
  * 验证 API 配置是否有效
  * @param apiUrl - API 基础地址
  * @param apiId - API 标识符
+ * @param apiKey - API Key（可选，与 apiId 二选一）
  * @returns 验证结果、错误消息和缺失配置类型
  */
 export function validateApiConfig(
   apiUrl: string,
-  apiId: string
+  apiId: string,
+  apiKey?: string
 ): { valid: boolean; message?: string; missingConfig?: 'apiUrl' | 'apiId' | 'both' } {
   const urlMissing = !apiUrl || apiUrl.trim() === '';
   const idMissing = !apiId || apiId.trim() === '';
+  const keyMissing = !apiKey || apiKey.trim() === '';
 
-  // 检查是否都缺失
-  if (urlMissing && idMissing) {
-    return {
-      valid: false,
-      message: 'API URL 和 API ID 都未配置，请在设置中配置',
-      missingConfig: 'both',
-    };
-  }
-
+  // 优先检查 API URL
   // 检查 API URL 是否为空
   if (urlMissing) {
+    // 检查是否 API ID/Key 也都缺失
+    if (idMissing && keyMissing) {
+      return {
+        valid: false,
+        message: 'API URL 和 API ID/Key 都未配置，请在设置中配置',
+        missingConfig: 'both',
+      };
+    }
+
     return {
       valid: false,
       message: 'API URL 不能为空，请在设置中配置',
@@ -137,25 +141,29 @@ export function validateApiConfig(
     };
   }
 
-  // 检查 API ID 是否为空
-  if (idMissing) {
+  // 检查 API ID 或 API Key 是否至少有一个存在
+  if (idMissing && keyMissing) {
     return {
       valid: false,
-      message: 'API ID 不能为空，请在设置中配置',
+      message: 'API ID 或 API Key 至少需要配置一个，请在设置中配置',
       missingConfig: 'apiId',
     };
   }
 
-  // 检查 API ID 格式（UUID 格式）
-  const uuidRegex =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (!uuidRegex.test(apiId)) {
-    return {
-      valid: false,
-      message: 'API ID 格式无效，应为 UUID 格式（例如：34arr92a-cb42-58op-56op-ggy15rt9878c）',
-      missingConfig: 'apiId',
-    };
+  // 如果提供了 API ID，检查 API ID 格式（UUID 格式）
+  if (!idMissing) {
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(apiId)) {
+      return {
+        valid: false,
+        message: 'API ID 格式无效，应为 UUID 格式（例如：34arr92a-cb42-58op-56op-ggy15rt9878c）',
+        missingConfig: 'apiId',
+      };
+    }
   }
+
+  // 如果只提供了 API Key，不进行格式验证（API Key 格式由服务端验证）
 
   return { valid: true };
 }
@@ -164,17 +172,19 @@ export function validateApiConfig(
  * 测试 API 连接
  * @param apiUrl - API 基础地址
  * @param apiId - API 标识符
+ * @param apiKey - API Key（可选）
  * @returns 测试是否成功
  */
 export async function testApiConnection(
   apiUrl: string,
-  apiId: string
+  apiId: string,
+  apiKey?: string
 ): Promise<boolean> {
   try {
     log('[API] 开始测试 API 连接...');
 
     // 验证配置
-    const validation = validateApiConfig(apiUrl, apiId);
+    const validation = validateApiConfig(apiUrl, apiId, apiKey);
     if (!validation.valid) {
       logError(`[API] 配置验证失败：${validation.message}`);
       return false;
@@ -207,10 +217,10 @@ export async function getApiIdFromKey(
   apiKey: string
 ): Promise<string> {
   try {
-    log(`[API] 开始通过 API Key 获取 API ID，URL: ${apiUrl}/api/get-key-id`);
+    log(`[API] 开始通过 API Key 获取 API ID，URL: ${apiUrl}/apiStats/api/get-key-id`);
 
     // 构建完整的 API 地址
-    const fullUrl = `${apiUrl}/api/get-key-id`;
+    const fullUrl = `${apiUrl}/apiStats/api/get-key-id`;
 
     // 发送 POST 请求
     const response = await axios.post<ApiKeyResponse>(
@@ -234,12 +244,12 @@ export async function getApiIdFromKey(
     }
 
     // 检查响应数据
-    if (!response.data || !response.data.success || !response.data.data?.apiId) {
+    if (!response.data || !response.data.success || !response.data.data?.id) {
       throw new Error('API Key 转换失败或返回数据无效');
     }
 
-    log(`[API] API ID 获取成功：${response.data.data.apiId}`);
-    return response.data.data.apiId;
+    log(`[API] API ID 获取成功：${response.data.data.id}`);
+    return response.data.data.id;
   } catch (error) {
     // 处理不同类型的错误
     if (axios.isAxiosError(error)) {

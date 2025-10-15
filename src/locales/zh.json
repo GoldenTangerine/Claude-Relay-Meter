@@ -45,9 +45,9 @@
     "tip": "提示",
     "updateTime": "更新时间",
     "needConfiguration": "⚙️ Claude Relay Meter\n\n需要配置\n\n{message}",
-    "pleaseConfigureFirst": "请先配置 API URL 和 API ID（或 API Key）",
-    "pleaseConfigureApiUrl": "请先配置 API URL",
-    "pleaseConfigureApiIdOrKey": "请先配置 API ID 或 API Key"
+    "pleaseConfigureFirst": "请先配置 API URL（必填）以及 API ID 或 API Key（二选一）",
+    "pleaseConfigureApiUrl": "请先配置 API URL（必填）",
+    "pleaseConfigureApiIdOrKey": "请先配置 API ID 或 API Key（二选一）"
   },
   "errors": {
     "invalidApiUrl": "API URL 格式无效",
