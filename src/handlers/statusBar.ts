@@ -150,67 +150,56 @@ function createTooltip(data: RelayApiResponse, apiUrl: string, apiId: string): v
   tooltip.supportHtml = true;
   tooltip.supportThemeIcons = true;
 
-  // 标题
-  tooltip.appendMarkdown(`## ${t('tooltips.title')}\n\n`);
-
-  // 用户信息
+  // 标题和用户信息
+  tooltip.appendMarkdown(`## ${t('tooltips.title')}\n`);
   tooltip.appendMarkdown(`**${t('tooltips.user')}：** ${data.data.name}\n\n`);
 
   // 每日费用限制
-  tooltip.appendMarkdown('---\n\n');
-  tooltip.appendMarkdown(`### ${t('tooltips.dailyCostLimit')}\n\n`);
+  tooltip.appendMarkdown(`### 📊 ${t('tooltips.dailyCostLimit')}\n`);
   tooltip.appendMarkdown(
-    `**${t('tooltips.usageStatus')}：** ${dailyStats.formattedUsed} / ${dailyStats.formattedLimit}\n\n`
+    `**${t('tooltips.usageStatus')}：** ${dailyStats.formattedUsed} / ${dailyStats.formattedLimit}  ${getColoredPercentage(dailyStats)}\n\n`
   );
-  tooltip.appendMarkdown(`**${t('tooltips.percentage')}：** ${getColoredPercentage(dailyStats)}\n\n`);
 
   // 总费用限制
   if (totalStats.limit > 0) {
-    tooltip.appendMarkdown('---\n\n');
-    tooltip.appendMarkdown(`### ${t('tooltips.totalCostLimit')}\n\n`);
+    tooltip.appendMarkdown(`### 💰 ${t('tooltips.totalCostLimit')}\n`);
     tooltip.appendMarkdown(
-      `**${t('tooltips.usageStatus')}：** ${totalStats.formattedUsed} / ${totalStats.formattedLimit}\n\n`
+      `**${t('tooltips.usageStatus')}：** ${totalStats.formattedUsed} / ${totalStats.formattedLimit}  ${getColoredPercentage(totalStats)}\n\n`
     );
-    tooltip.appendMarkdown(`**${t('tooltips.percentage')}：** ${getColoredPercentage(totalStats)}\n\n`);
   }
 
   // Opus 模型周费用限制
   if (opusStats.limit > 0) {
-    tooltip.appendMarkdown('---\n\n');
-    tooltip.appendMarkdown(`### ${t('tooltips.opusWeeklyCostLimit')}\n\n`);
+    tooltip.appendMarkdown(`### 🚀 ${t('tooltips.opusWeeklyCostLimit')}\n`);
     tooltip.appendMarkdown(
-      `**${t('tooltips.usageStatus')}：** ${opusStats.formattedUsed} / ${opusStats.formattedLimit}\n\n`
+      `**${t('tooltips.usageStatus')}：** ${opusStats.formattedUsed} / ${opusStats.formattedLimit}  ${getColoredPercentage(opusStats)}\n\n`
     );
-    tooltip.appendMarkdown(`**${t('tooltips.percentage')}：** ${getColoredPercentage(opusStats)}\n\n`);
   }
 
-  // 其他信息
-  tooltip.appendMarkdown('---\n\n');
-  tooltip.appendMarkdown(`### ${t('tooltips.otherStats')}\n\n`);
-  tooltip.appendMarkdown(`**${t('tooltips.totalRequests')}：** ${formatLargeNumber(data.data.usage.total.requests)}\n\n`);
-  tooltip.appendMarkdown(`**${t('tooltips.totalTokens')}：** ${formatLargeNumber(data.data.usage.total.allTokens)}\n\n`);
-  tooltip.appendMarkdown(`**${t('tooltips.totalCost')}：** ${data.data.usage.total.formattedCost}\n\n`);
+  // 其他统计信息（合并到一行）
+  tooltip.appendMarkdown(`### 📈 ${t('tooltips.otherStats')}\n`);
+  tooltip.appendMarkdown(
+    `**${t('tooltips.totalRequests')}：** ${formatLargeNumber(data.data.usage.total.requests)} | ` +
+    `**Token：** ${formatLargeNumber(data.data.usage.total.allTokens)} | ` +
+    `**${t('tooltips.totalCost')}：** ${data.data.usage.total.formattedCost}\n\n`
+  );
 
-  // 操作按钮
-  tooltip.appendMarkdown('---\n\n');
+  // 操作区域
+  tooltip.appendMarkdown('---\n');
 
   // 构建网页仪表板地址
   const webDashboardUrl = `${apiUrl}/admin-next/api-stats?apiId=${apiId}`;
   const webDashboardArgs = encodeURIComponent(JSON.stringify({ url: webDashboardUrl }));
 
-  // 第一行：提示文本
-  tooltip.appendMarkdown(
-    `${t('tooltips.tip')} **：** ${t('tooltips.clickToRefresh')}\n\n`
-  );
-
-  // 第二行：操作按钮
+  // 提示和操作按钮（合并到两行）
+  tooltip.appendMarkdown(`💡 **${t('tooltips.tip')}：** ${t('tooltips.clickToRefresh')}\n`);
   tooltip.appendMarkdown(
     `[${t('commands.openSettings')}](command:claude-relay-meter.openSettings) | [${t('tooltips.openWebDashboard')}](command:claude-relay-meter.openWebDashboard?${webDashboardArgs})\n\n`
   );
 
   // 更新时间
   const now = new Date().toLocaleString();
-  tooltip.appendMarkdown(`${t('tooltips.updateTime')} **：** ${now}\n\n`);
+  tooltip.appendMarkdown(`🕐 ${t('tooltips.updateTime')}：${now}`);
 
   return tooltip;
 }
@@ -218,19 +207,50 @@ function createTooltip(data: RelayApiResponse, apiUrl: string, apiId: string): v
 /**
  * 获取带颜色的百分比文本
  * @param stats - 费用统计对象
- * @returns 格式化的百分比文本
+ * @returns 格式化的百分比文本（使用 HTML 颜色和 Emoji 指示器）
  */
 function getColoredPercentage(stats: CostStats): string {
   const percentage = stats.percentage;
-  let emoji = '🟢'; // 绿色
 
-  if (percentage >= 80) {
-    emoji = '🔴'; // 红色
-  } else if (percentage >= 50) {
-    emoji = '🟡'; // 黄色
+  // 获取配置
+  const config = vscode.workspace.getConfiguration('relayMeter');
+  const enableColors = config.get<boolean>('enableStatusBarColors', true);
+  const thresholds = config.get<{ low: number; medium: number }>('colorThresholds', {
+    low: 50,
+    medium: 80,
+  });
+  const customColors = config.get<{ low: string; medium: string; high: string }>('customColors', {
+    low: '#66BB6A',
+    medium: '#FFD700',
+    high: '#FF6600',
+  });
+
+  // 如果未启用颜色，使用默认灰色和白色圆形
+  if (!enableColors) {
+    const defaultColor = '#CCCCCC';
+    return `⚪ <span style="color: ${defaultColor}; font-size: 1.1em;"><strong>${stats.formattedPercentage}%</strong></span>`;
   }
 
-  return `${emoji} **${stats.formattedPercentage}%**`;
+  // 根据阈值确定颜色和 Emoji 指示器
+  let color: string;
+  let indicator: string;
+
+  if (percentage < thresholds.low) {
+    // 低使用率：绿色
+    color = customColors.low;
+    indicator = '🟢';
+  } else if (percentage < thresholds.medium) {
+    // 中使用率：黄色
+    color = customColors.medium;
+    indicator = '🟡';
+  } else {
+    // 高使用率：红色/橙色
+    color = customColors.high;
+    indicator = '🔴';
+  }
+
+  // 使用 HTML span 标签设置颜色，增大字体并加粗
+  return `${indicator} <span style="color: ${color}; font-size: 1.1em;"><strong>${stats.formattedPercentage}%</strong></span>`;
 }
 
 /**
