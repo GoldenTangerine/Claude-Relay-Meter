@@ -137,6 +137,7 @@ $(graph) $3.96/$100.00 3.96%
 - 📊 **每日费用限制**：显示每日费用使用情况及百分比
 - 💰 **总费用限制**：显示总费用使用情况及百分比
 - 🚀 **Opus 模型周费用限制**：显示 Opus 模型的周费用使用情况及百分比
+- 📈 **其他统计**：显示总请求数、总 Token 数、总费用等信息
 - 🌐 **网页仪表板**：点击"网页仪表板"按钮可在浏览器中打开完整的统计页面
 
 #### 手动刷新
@@ -352,6 +353,7 @@ Hover your mouse over the status bar item to view detailed cost information:
 - 📊 **Daily Cost Limit**: Shows daily cost usage and percentage
 - 💰 **Total Cost Limit**: Shows total cost usage and percentage
 - 🚀 **Opus Model Weekly Cost Limit**: Shows Opus model weekly cost usage and percentage
+- 📈 **Other Statistics**: Shows total requests, total tokens, total cost, etc.
 - 🌐 **Web Dashboard**: Click "Web Dashboard" button to open full statistics page in browser
 
 #### Manual Refresh

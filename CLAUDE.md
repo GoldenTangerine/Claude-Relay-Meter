@@ -49,6 +49,95 @@ The extension is published as a `.vsix` file. After making changes:
 - Supports API Key authentication: if apiId is empty but apiKey exists, automatically fetches apiId via API
 - 10-second timeout on all requests
 
+**API Response Format**
+
+The `/api/user-stats` endpoint returns comprehensive usage and limit information. See [src/interfaces/types.ts](src/interfaces/types.ts) for TypeScript interface definitions.
+
+Example response:
+```json
+{
+  "success": true,
+  "data": {
+    "id": "21add92a-cb42-40b4-a054-c5e11cd48a6f",
+    "name": "空白_黑猫 100🔪",
+    "description": "",
+    "isActive": true,
+    "createdAt": "2025-09-29T11:24:19.439Z",
+    "expiresAt": "",
+    "expirationMode": "fixed",
+    "isActivated": true,
+    "activationDays": 0,
+    "activatedAt": "2025-09-29T11:24:19.439Z",
+    "permissions": "all",
+    "usage": {
+      "total": {
+        "tokens": 186438255,
+        "inputTokens": 12641884,
+        "outputTokens": 1475459,
+        "cacheCreateTokens": 18789029,
+        "cacheReadTokens": 153531883,
+        "allTokens": 186438255,
+        "requests": 4262,
+        "cost": 160.34903145,
+        "formattedCost": "$160.35"
+      }
+    },
+    "limits": {
+      "tokenLimit": 0,
+      "concurrencyLimit": 0,
+      "rateLimitWindow": 0,
+      "rateLimitRequests": 0,
+      "rateLimitCost": 0,
+      "dailyCostLimit": 100,
+      "totalCostLimit": 0,
+      "weeklyOpusCostLimit": 500,
+      "currentWindowRequests": 0,
+      "currentWindowTokens": 0,
+      "currentWindowCost": 0,
+      "currentDailyCost": 0,
+      "currentTotalCost": 160.34903145,
+      "weeklyOpusCost": 0,
+      "windowStartTime": null,
+      "windowEndTime": null,
+      "windowRemainingSeconds": null
+    },
+    "accounts": {
+      "claudeAccountId": null,
+      "geminiAccountId": null,
+      "openaiAccountId": null,
+      "details": null
+    },
+    "restrictions": {
+      "enableModelRestriction": false,
+      "restrictedModels": [],
+      "enableClientRestriction": false,
+      "allowedClients": []
+    }
+  }
+}
+```
+
+**Key Fields:**
+- `success`: Boolean indicating request success status
+- `data.usage.total`: Comprehensive token and cost statistics
+  - `tokens`: Total tokens (sum of all token types)
+  - `inputTokens`: User input tokens
+  - `outputTokens`: Model output tokens
+  - `cacheCreateTokens`: Tokens used to create cache
+  - `cacheReadTokens`: Tokens read from cache
+  - `requests`: Total API requests count
+  - `cost`: Actual cost in USD (unformatted)
+  - `formattedCost`: Formatted cost string with currency symbol
+- `data.limits`: Cost and rate limits with current usage
+  - `dailyCostLimit`: Maximum daily spending (0 = unlimited)
+  - `totalCostLimit`: Maximum total spending (0 = unlimited)
+  - `weeklyOpusCostLimit`: Weekly spending limit for Opus model
+  - `currentDailyCost`: Current day's spending
+  - `currentTotalCost`: Total cumulative spending
+  - `weeklyOpusCost`: Current week's Opus model spending
+- `data.accounts`: Associated AI service account IDs
+- `data.restrictions`: Model and client access control rules
+
 **Status Bar Handler ([src/handlers/statusBar.ts](src/handlers/statusBar.ts))**
 - Creates and updates status bar item (right side, priority 100)
 - Main display format: `$(graph) $used/$limit percentage%`

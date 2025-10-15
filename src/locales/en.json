@@ -38,6 +38,7 @@
     "percentage": "Usage Percentage",
     "totalRequests": "Total Requests",
     "totalTokens": "Total Tokens",
+    "totalCost": "Total Cost",
     "clickToRefresh": "Click status bar to refresh data",
     "clickToConfigure": "Click to open settings",
     "openWebDashboard": "Web Dashboard",

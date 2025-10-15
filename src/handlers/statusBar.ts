@@ -189,6 +189,7 @@ function createTooltip(data: RelayApiResponse, apiUrl: string, apiId: string): v
   tooltip.appendMarkdown(`### ${t('tooltips.otherStats')}\n\n`);
   tooltip.appendMarkdown(`**${t('tooltips.totalRequests')}：** ${formatLargeNumber(data.data.usage.total.requests)}\n\n`);
   tooltip.appendMarkdown(`**${t('tooltips.totalTokens')}：** ${formatLargeNumber(data.data.usage.total.allTokens)}\n\n`);
+  tooltip.appendMarkdown(`**${t('tooltips.totalCost')}：** ${data.data.usage.total.formattedCost}\n\n`);
 
   // 操作按钮
   tooltip.appendMarkdown('---\n\n');

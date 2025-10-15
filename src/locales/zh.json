@@ -38,6 +38,7 @@
     "percentage": "使用百分比",
     "totalRequests": "总请求数",
     "totalTokens": "总 Token 数",
+    "totalCost": "总费用",
     "clickToRefresh": "点击状态栏刷新数据",
     "clickToConfigure": "点击打开设置",
     "openWebDashboard": "网页仪表板",
