@@ -14,8 +14,10 @@ Claude Relay Meter is a multilingual VSCode extension that monitors Claude Relay
 ```bash
 npm install              # Install dependencies
 npm run compile          # Compile TypeScript + copy locale files to out/
-npm run copy-locales     # Copy locale JSON files to out/locales/
-npm run watch            # Watch mode for development
+                         # This command runs both tsc compilation and copy-locales script
+                         # Locale files from src/locales/*.json are copied to out/locales/
+npm run copy-locales     # Copy locale JSON files to out/locales/ (standalone)
+npm run watch            # Watch mode for development (TypeScript only)
 npm run lint             # Run ESLint on TypeScript files
 npm run package          # Package extension as .vsix file
 ```
@@ -34,7 +36,8 @@ The extension is published as a `.vsix` file. After making changes:
 **Extension Lifecycle ([src/extension.ts](src/extension.ts))**
 - Entry point managing activation/deactivation
 - Initializes i18n system on startup
-- Registers commands: `refreshStats`, `openSettings`, and `selectLanguage`
+- Registers commands: `refreshStats`, `openSettings`, `selectLanguage`, and `openWebDashboard`
+  - `openWebDashboard`: Opens the web dashboard in browser at `{apiUrl}/admin-next/api-stats?apiId={apiId}`
 - Manages timer-based auto-refresh with window focus awareness
 - Handles configuration changes (including language switching) and re-initialization
 - Configuration namespace: `relayMeter.*`
@@ -43,7 +46,7 @@ The extension is published as a `.vsix` file. After making changes:
 - Communicates with Claude Relay Service backend
 - Endpoints:
   - User stats: `POST {apiUrl}/apiStats/api/user-stats` with body `{ "apiId": "..." }`
-  - API Key to ID conversion: `POST {apiUrl}/api/get-key-id` with body `{ "apiKey": "..." }`
+  - API Key to ID conversion: `POST {apiUrl}/apiStats/api/get-key-id` with body `{ "apiKey": "..." }`
 - Implements retry logic with exponential backoff (3 retries, starting at 1s delay)
 - Validates API URL format (must be valid HTTP/HTTPS) and API ID (must be UUID)
 - Supports API Key authentication: if apiId is empty but apiKey exists, automatically fetches apiId via API
@@ -58,8 +61,8 @@ Example response:
 {
   "success": true,
   "data": {
-    "id": "21add92a-cb42-40b4-a054-c5e11cd48a6f",
-    "name": "空白_黑猫 100🔪",
+    "id": "21add92a-cb42-11b4-a054-c1e11cde3a1f",
+    "name": "100🔪",
     "description": "",
     "isActive": true,
     "createdAt": "2025-09-29T11:24:19.439Z",
@@ -171,6 +174,10 @@ Example response:
 - `formatNumber()`: Up to 4 decimals, trailing zeros removed
 - `formatPercentage()`: Up to 2 decimals, clamped to 0-100
 - `formatCost()`: Adds `$` prefix
+- `formatLargeNumber()`: Converts large numbers to K/M/B units (e.g., 4042 → "4K", 171659455 → "171.7M")
+  - Used for displaying request counts and token numbers in tooltips
+  - Numbers < 1000 display as-is, >= 1000 use appropriate unit suffix
+  - Decimal precision: 2 decimals for values < 10, 1 decimal for values >= 10
 - All formatting ensures clean display without unnecessary precision
 
 **Color Helper ([src/utils/colorHelper.ts](src/utils/colorHelper.ts))**
@@ -187,6 +194,14 @@ Example response:
 - Monitors `relayMeter.language` setting changes for real-time language switching
 - Callback system notifies other components when language changes
 
+**Claude Settings Reader ([src/utils/claudeSettingsReader.ts](src/utils/claudeSettingsReader.ts))**
+- Reads configuration from Claude Code's `~/.claude/settings.json` file
+- Extracts `ANTHROPIC_AUTH_TOKEN` and `ANTHROPIC_BASE_URL` from settings
+- Automatically normalizes API URL by removing `/api` suffix (case-insensitive)
+- Provides `readClaudeSettings()` function that returns `{ apiKey?, apiUrl? }`
+- Cross-platform compatible (Windows/macOS/Linux) using `os.homedir()`
+- Graceful error handling for missing files or invalid JSON
+
 ## Configuration Structure
 
 All settings under `relayMeter.*` namespace:
@@ -198,6 +213,22 @@ All settings under `relayMeter.*` namespace:
   - `apiKey`: API Key string (e.g., `cr_abcd1234efgh5678`)
   - **Priority**: When both `apiId` and `apiKey` exist, `apiId` takes precedence
   - **Auto-conversion**: If only `apiKey` is provided, it's automatically converted to `apiId` via API call
+
+**Auto-Configuration from Claude Code Settings:**
+- If `apiUrl` or `apiId`/`apiKey` are not configured, the extension will attempt to read them from `~/.claude/settings.json`
+- This file is used by Claude Code and contains `ANTHROPIC_AUTH_TOKEN` (maps to `apiKey`) and `ANTHROPIC_BASE_URL` (maps to `apiUrl`)
+- The extension automatically removes the `/api` suffix from `ANTHROPIC_BASE_URL` if present
+- **Priority order**: User manual configuration > Claude Code settings.json
+- Example Claude Code settings.json:
+  ```json
+  {
+    "env": {
+      "ANTHROPIC_AUTH_TOKEN": "cr_b7a7f660529396e18d7a8805510dd3da9eaba1f8403d8c8a2803b123b889b1eb",
+      "ANTHROPIC_BASE_URL": "https://hk1.pincc.ai/api"
+    }
+  }
+  ```
+- The extension will use: `apiKey = "cr_b7a7..."` and `apiUrl = "https://hk1.pincc.ai"` (note: `/api` removed)
 
 **Optional:**
 - `refreshInterval`: Update frequency in seconds (min: 10, default: 60)
@@ -228,17 +259,22 @@ All settings under `relayMeter.*` namespace:
 
 ## Important Implementation Details
 
-1. **Command Registration**: Commands are registered in `extension.ts` under the `claude-relay-meter.*` namespace. The settings command uses the publisher name in the search query.
+1. **Initialization Order**: Extension activation must follow a strict initialization sequence:
+   - First: `initializeLogging()` - Must be called before any log statements
+   - Second: `initializeI18n()` - Required before any translation calls
+   - This order is critical and explicitly documented in the code with warnings
 
-2. **Status Bar Command**: Clicking the status bar executes `refreshStats` command by default, but switches to `openSettings` when config is invalid.
+2. **Command Registration**: Commands are registered in `extension.ts` under the `claude-relay-meter.*` namespace. The settings command uses the publisher name in the search query.
 
-3. **Retry Strategy**: API requests use exponential backoff (1s → 2s → 4s) for up to 3 attempts before failing.
+3. **Status Bar Command**: Clicking the status bar executes `refreshStats` command by default, but switches to `openSettings` when config is invalid.
 
-4. **Percentage Clamping**: All percentage calculations are clamped to 0-100 range to prevent display issues.
+4. **Retry Strategy**: API requests use exponential backoff (1s → 2s → 4s) for up to 3 attempts before failing.
 
-5. **Tooltip Links**: Tooltips use VSCode command URIs (`command:claude-relay-meter.openSettings`) for interactive actions.
+5. **Percentage Clamping**: All percentage calculations are clamped to 0-100 range to prevent display issues.
 
-6. **Publisher Placeholder**: The `package.json` contains `your-publisher-name` placeholder that should be updated before publishing.
+6. **Tooltip Links**: Tooltips use VSCode command URIs (`command:claude-relay-meter.openSettings`) for interactive actions.
+
+7. **Publisher Placeholder**: The `package.json` contains `your-publisher-name` placeholder that should be updated before publishing.
 
 ## File Organization
 
@@ -259,7 +295,8 @@ src/
     ├── logger.ts            # Logging utilities
     ├── formatter.ts         # Number/text formatting
     ├── colorHelper.ts       # Color computation
-    └── i18n.ts              # Internationalization system
+    ├── i18n.ts              # Internationalization system
+    └── claudeSettingsReader.ts  # Claude Code settings reader
 ```
 
 ## Internationalization (i18n)

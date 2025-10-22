@@ -2,6 +2,51 @@
 
 所有关于此项目的重要更改都将记录在此文件中。
 
+## [1.0.8] - 2025-10-21
+
+### ✨ 新增
+- **自动读取 Claude Code 配置**
+  - 如果用户未配置 API URL 或 API Key/ID，扩展会自动尝试从 `~/.claude/settings.json` 读取配置
+  - 自动读取 `ANTHROPIC_AUTH_TOKEN`（映射为 `apiKey`）
+  - 自动读取 `ANTHROPIC_BASE_URL`（映射为 `apiUrl`，自动去除 `/api` 后缀）
+  - **优先级**：用户手动配置 > Claude Code settings.json
+  - 跨平台支持（Windows/macOS/Linux）
+  - 新增工具模块：`src/utils/claudeSettingsReader.ts`
+
+- **Claude Settings 配置变更检测**
+  - 当用户完全依赖 Claude Code 配置时（未手动配置任何内容），自动监测配置变更
+  - 每次刷新数据时检测 `apiUrl` 和 `apiKey` 是否变化
+  - 检测到变更时显示友好提示，询问用户是否使用新配置
+  - 用户可选择"使用新配置"或"保持当前配置"
+  - 详细的变更日志记录（旧配置 → 新配置）
+  - 不干扰手动配置的用户（部分或全部手动配置时不触发监测）
+
+### 🎨 改进
+- **简化悬浮窗按钮文字**
+  - "打开设置" → "设置"
+  - "网页仪表板" → "仪表盘"
+  - 减少文字，界面更简洁清爽
+
+### 🛠️ 技术改进
+- 新增全局变量 `lastClaudeSettings` 和 `isUsingClaudeSettings` 用于配置变更追踪
+- 修改 `getConfiguration()` 函数，添加 Claude settings 使用情况判断逻辑
+- 新增 `checkClaudeSettingsChange()` 函数，智能检测配置变更
+- 修改 `updateStats()` 函数，在刷新前检测配置变更并提示用户
+- 更新中英文语言包，添加配置变更相关提示文本
+
+### 📝 文档更新
+- 更新 `CLAUDE.md` - 添加"Auto-Configuration from Claude Code Settings"章节
+- 添加 Claude Settings Reader 工具说明
+- 更新文件组织结构，包含新的 `claudeSettingsReader.ts`
+- 添加配置优先级和自动读取逻辑说明
+
+### 💡 使用场景
+- **零配置启动**：Claude Code 用户无需重复配置，即插即用
+- **配置同步**：Claude Code 配置变更时自动检测并提醒
+- **灵活控制**：用户可随时选择手动配置，不受自动读取影响
+
+---
+
 ## [1.0.7] - 2025-10-15
 
 ### 🐛 修复

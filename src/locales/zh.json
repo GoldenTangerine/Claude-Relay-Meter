@@ -11,7 +11,7 @@
   },
   "commands": {
     "refreshStats": "刷新统计数据",
-    "openSettings": "打开设置",
+    "openSettings": "设置",
     "selectLanguage": "选择语言",
     "configureNow": "立即配置",
     "later": "稍后",
@@ -23,7 +23,10 @@
     "dataRefreshed": "数据已刷新",
     "errorOccurred": "Claude Relay Meter: 获取数据失败 - {error}",
     "retryOption": "重试",
-    "openSettingsOption": "打开设置"
+    "openSettingsOption": "打开设置",
+    "claudeSettingsChanged": "检测到 Claude Code 配置已更新（API URL: {oldUrl} → {newUrl}），是否使用新配置？",
+    "useNewSettings": "使用新配置",
+    "keepOldSettings": "保持当前配置"
   },
   "tooltips": {
     "title": "⚡ Claude Relay Meter",
@@ -41,7 +44,7 @@
     "totalCost": "总费用",
     "clickToRefresh": "点击状态栏刷新数据",
     "clickToConfigure": "点击打开设置",
-    "openWebDashboard": "网页仪表板",
+    "openWebDashboard": "仪表盘",
     "tip": "提示",
     "updateTime": "更新时间",
     "needConfiguration": "⚙️ Claude Relay Meter\n\n需要配置\n\n{message}",

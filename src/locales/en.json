@@ -11,7 +11,7 @@
   },
   "commands": {
     "refreshStats": "Refresh Statistics",
-    "openSettings": "Open Settings",
+    "openSettings": "Settings",
     "selectLanguage": "Select Language",
     "configureNow": "Configure Now",
     "later": "Later",
@@ -23,7 +23,10 @@
     "dataRefreshed": "Data Refreshed",
     "errorOccurred": "Claude Relay Meter: Failed to fetch data - {error}",
     "retryOption": "Retry",
-    "openSettingsOption": "Open Settings"
+    "openSettingsOption": "Open Settings",
+    "claudeSettingsChanged": "Claude Code settings updated (API URL: {oldUrl} → {newUrl}). Use new settings?",
+    "useNewSettings": "Use New Settings",
+    "keepOldSettings": "Keep Current Settings"
   },
   "tooltips": {
     "title": "⚡ Claude Relay Meter",
@@ -41,7 +44,7 @@
     "totalCost": "Total Cost",
     "clickToRefresh": "Click status bar to refresh data",
     "clickToConfigure": "Click to open settings",
-    "openWebDashboard": "Web Dashboard",
+    "openWebDashboard": "Dashboard",
     "tip": "Tip",
     "updateTime": "Update Time",
     "needConfiguration": "⚙️ Claude Relay Meter\n\nConfiguration Required\n\n{message}",
