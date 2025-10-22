@@ -1,4 +1,7 @@
 {
+  "common": {
+    "none": "无"
+  },
   "statusBar": {
     "loading": "加载中...",
     "error": "获取数据失败",
@@ -26,7 +29,12 @@
     "openSettingsOption": "打开设置",
     "claudeSettingsChanged": "检测到 Claude Code 配置已更新（API URL: {oldUrl} → {newUrl}），是否使用新配置？",
     "useNewSettings": "使用新配置",
-    "keepOldSettings": "保持当前配置"
+    "keepOldSettings": "保持当前配置",
+    "claudeConfigChangedDetail": "检测到 ~/.claude/settings.json 中的配置已更新:\n\n当前配置:\n  API URL: {currentUrl}\n  API Key: {currentKey}\n\n新配置:\n  API URL: {newUrl}\n  API Key: {newKey}\n\n是否使用新配置?",
+    "useNewConfig": "使用新配置",
+    "keepCurrentConfig": "保持当前配置",
+    "configUpdated": "配置已更新",
+    "configKept": "已保持当前配置"
   },
   "tooltips": {
     "title": "⚡ Claude Relay Meter",

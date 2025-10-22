@@ -19,17 +19,13 @@ import {
 } from './services/api';
 import { StatusBarConfig } from './interfaces/types';
 import { initializeI18n, t, setOnLanguageChangeCallback } from './utils/i18n';
-import { readClaudeSettings } from './utils/claudeSettingsReader';
+import * as ConfigManager from './utils/configManager';
+import * as ClaudeSettingsWatcher from './utils/claudeSettingsWatcher';
 
 // 全局变量
 let statusBarItem: vscode.StatusBarItem;
 let refreshTimer: NodeJS.Timeout | undefined;
 let isWindowFocused: boolean = true;
-
-// 记录上次从 Claude Code settings 读取的配置（用于检测变更）
-let lastClaudeSettings: { apiUrl?: string; apiKey?: string } | null = null;
-// 标记是否完全使用 Claude settings（用户未手动配置任何内容）
-let isUsingClaudeSettings: boolean = false;
 
 /**
  * 插件激活时调用
@@ -42,6 +38,9 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // 初始化国际化系统（在日志之后、其他初始化之前）
     initializeI18n();
+
+    // 初始化配置管理器
+    ConfigManager.initialize(context);
 
     // 设置语言变更回调
     setOnLanguageChangeCallback((newLanguage: string, languageLabel: string) => {
@@ -72,6 +71,9 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // 监听窗口焦点变化
     registerWindowFocusListener(context);
+
+    // 初始化运行时配置（如果需要）
+    await ConfigManager.initializeFromClaudeSettings();
 
     // 获取配置并验证
     const config = getConfiguration();
@@ -112,6 +114,11 @@ export async function activate(context: vscode.ExtensionContext) {
       startRefreshTimer();
     }
 
+    // 启动文件监听器（只在没有手动配置时）
+    if (!ConfigManager.hasManualConfig()) {
+      ClaudeSettingsWatcher.startWatching(context, updateStats);
+    }
+
     log(t('logs.activationComplete'));
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -139,6 +146,9 @@ export function deactivate() {
     refreshTimer = undefined;
     log('[停用] 已清理定时器');
   }
+
+  // 停止文件监听
+  ClaudeSettingsWatcher.stopWatching();
 
   log('[停用] 插件停用完成');
 }
@@ -215,6 +225,22 @@ function registerConfigurationListener(context: vscode.ExtensionContext): void {
       if (event.affectsConfiguration('relayMeter')) {
         log(t('logs.configChanged'));
 
+        // 检查是否是手动配置变更（apiKey 或 apiUrl）
+        if (
+          event.affectsConfiguration('relayMeter.apiKey') ||
+          event.affectsConfiguration('relayMeter.apiUrl') ||
+          event.affectsConfiguration('relayMeter.apiId')
+        ) {
+          // 手动配置变更，需要重新判断是否启停文件监听
+          if (ConfigManager.hasManualConfig()) {
+            // 有手动配置，停止文件监听
+            ClaudeSettingsWatcher.stopWatching();
+          } else {
+            // 清除了手动配置，启动文件监听
+            ClaudeSettingsWatcher.startWatching(context, updateStats);
+          }
+        }
+
         // 重启定时器
         startRefreshTimer();
 
@@ -248,92 +274,10 @@ function registerWindowFocusListener(context: vscode.ExtensionContext): void {
 }
 
 /**
- * 检查 Claude Code settings 是否有变更
- * @returns 如果有变更返回新的配置，否则返回 null
- */
-function checkClaudeSettingsChange(): { apiUrl?: string; apiKey?: string } | null {
-  // 只有在完全使用 Claude settings 时才检测变更
-  if (!isUsingClaudeSettings || !lastClaudeSettings) {
-    return null;
-  }
-
-  // 读取当前 Claude settings
-  const currentSettings = readClaudeSettings();
-
-  // 如果当前 settings 为空，说明配置文件可能被删除了
-  if (Object.keys(currentSettings).length === 0) {
-    log('[配置变更检测] Claude Code 配置文件不存在或为空');
-    return null;
-  }
-
-  // 比较是否有变化
-  const urlChanged = currentSettings.apiUrl !== lastClaudeSettings.apiUrl;
-  const keyChanged = currentSettings.apiKey !== lastClaudeSettings.apiKey;
-  const hasChange = urlChanged || keyChanged;
-
-  if (hasChange) {
-    log('[配置变更检测] 检测到 Claude Code 配置已变更');
-    if (urlChanged) {
-      log(`[配置变更检测] API URL 变更: ${lastClaudeSettings.apiUrl} -> ${currentSettings.apiUrl}`);
-    }
-    if (keyChanged) {
-      const oldKeyPreview = lastClaudeSettings.apiKey ? lastClaudeSettings.apiKey.substring(0, 10) + '...' : 'N/A';
-      const newKeyPreview = currentSettings.apiKey ? currentSettings.apiKey.substring(0, 10) + '...' : 'N/A';
-      log(`[配置变更检测] API Key 变更: ${oldKeyPreview} -> ${newKeyPreview}`);
-    }
-    return currentSettings;
-  }
-
-  return null;
-}
-
-/**
  * 更新统计数据
  */
 async function updateStats(): Promise<void> {
   try {
-    // 检查 Claude settings 是否有变更（仅当完全使用 Claude settings 时）
-    const newClaudeSettings = checkClaudeSettingsChange();
-
-    if (newClaudeSettings) {
-      // 检测到配置变更
-      log('[配置变更] 检测到 Claude Code 配置已变更，提示用户');
-
-      // 构建变更信息
-      const oldUrl = lastClaudeSettings?.apiUrl || 'N/A';
-      const newUrl = newClaudeSettings.apiUrl || 'N/A';
-
-      // 显示提示信息
-      const selection = await vscode.window.showInformationMessage(
-        t('notifications.claudeSettingsChanged', {
-          oldUrl: oldUrl,
-          newUrl: newUrl
-        }),
-        t('notifications.useNewSettings'),
-        t('notifications.keepOldSettings')
-      );
-
-      if (selection === t('notifications.useNewSettings')) {
-        // 用户选择使用新配置
-        log('[配置变更] 用户确认使用新的 Claude Code 配置');
-
-        // 更新保存的配置
-        lastClaudeSettings = {
-          apiUrl: newClaudeSettings.apiUrl,
-          apiKey: newClaudeSettings.apiKey
-        };
-
-        // 继续刷新（使用新配置）
-        // 递归调用 updateStats，此时将使用新配置
-        await updateStats();
-        return;
-      } else {
-        // 用户选择保持当前配置或关闭了提示框
-        log('[配置变更] 用户选择保持当前配置或未响应');
-        // 继续使用旧配置刷新
-      }
-    }
-
     log(t('logs.fetchingData'));
 
     // 获取配置
@@ -441,66 +385,18 @@ function stopRefreshTimer(): void {
 function getConfiguration(): StatusBarConfig {
   const config = vscode.workspace.getConfiguration('relayMeter');
 
-  // 读取用户配置
-  let apiUrl = config.get<string>('apiUrl', '');
-  let apiId = config.get<string>('apiId', '');
-  let apiKey = config.get<string>('apiKey', '');
+  // 获取有效配置（手动配置 > 运行时配置）
+  const effectiveConfig = ConfigManager.getEffectiveConfig();
 
-  // 检查用户是否完全未配置（用于判断是否需要监测 Claude settings 变更）
-  const userConfigEmpty =
-    (!apiUrl || apiUrl.trim() === '') &&
-    (!apiId || apiId.trim() === '') &&
-    (!apiKey || apiKey.trim() === '');
+  let apiUrl = '';
+  let apiId = '';
+  let apiKey = '';
 
-  // 检查是否需要从 Claude Code settings.json 读取配置
-  const needApiUrl = !apiUrl || apiUrl.trim() === '';
-  const needApiKey = (!apiId || apiId.trim() === '') && (!apiKey || apiKey.trim() === '');
-
-  // 如果用户未配置 API URL 或 API Key/ID，尝试从 Claude Code 配置读取
-  if (needApiUrl || needApiKey) {
-    log('[配置] 检测到部分配置缺失，尝试从 Claude Code 配置读取...');
-
-    try {
-      const claudeSettings = readClaudeSettings();
-
-      // 如果成功读取到配置
-      if (Object.keys(claudeSettings).length > 0) {
-        // 优先使用用户手动配置，如果为空则使用 Claude settings
-        if (needApiUrl && claudeSettings.apiUrl) {
-          apiUrl = claudeSettings.apiUrl;
-          log(`[配置] 从 Claude Code 配置读取到 API URL: ${apiUrl}`);
-        }
-
-        if (needApiKey && claudeSettings.apiKey) {
-          apiKey = claudeSettings.apiKey;
-          log(`[配置] 从 Claude Code 配置读取到 API Key: ${apiKey.substring(0, 10)}...`);
-        }
-
-        // 如果用户完全未配置，标记为使用 Claude settings，并保存配置用于后续检测变更
-        if (userConfigEmpty) {
-          isUsingClaudeSettings = true;
-          lastClaudeSettings = {
-            apiUrl: claudeSettings.apiUrl,
-            apiKey: claudeSettings.apiKey
-          };
-          log('[配置] 用户完全未手动配置，将监测 Claude Code 配置变更');
-        } else {
-          isUsingClaudeSettings = false;
-          log('[配置] 用户部分手动配置，不监测 Claude Code 配置变更');
-        }
-
-        log('[配置] Claude Code 配置读取成功');
-      } else {
-        log('[配置] Claude Code 配置文件未找到或为空');
-        isUsingClaudeSettings = false;
-      }
-    } catch (error) {
-      log(`[配置] 从 Claude Code 配置读取失败: ${error instanceof Error ? error.message : String(error)}`, true);
-      isUsingClaudeSettings = false;
-    }
-  } else {
-    // 用户已完全配置，不需要从 Claude settings 读取
-    isUsingClaudeSettings = false;
+  if (effectiveConfig) {
+    apiUrl = effectiveConfig.apiUrl;
+    // apiKey 可能是 apiKey 或 apiId
+    apiKey = effectiveConfig.apiKey;
+    log(`[配置] 使用${ConfigManager.hasManualConfig() ? '手动' : '运行时'}配置`);
   }
 
   return {

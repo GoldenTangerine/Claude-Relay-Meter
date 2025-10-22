@@ -150,3 +150,11 @@ export interface CustomColors {
   medium: string;
   high: string;
 }
+
+/**
+ * 运行时配置接口（从 Claude Settings 读取并实际使用的配置）
+ */
+export interface RuntimeConfig {
+  apiKey: string;
+  apiUrl: string;
+}

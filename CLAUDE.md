@@ -159,8 +159,71 @@ Example response:
   - `StatusBarConfig`: Extension configuration interface (includes apiId and apiKey)
   - `ApiKeyResponse`: Response interface for API Key to ID conversion
   - `CostStats`: Computed statistics for display
+  - `RuntimeConfig`: Runtime configuration interface (apiKey and apiUrl)
 - [src/interfaces/i18n.ts](src/interfaces/i18n.ts): Internationalization types
   - `LanguagePack`: Complete language pack interface structure
+
+### Configuration Management System
+
+**Config Manager ([src/utils/configManager.ts](src/utils/configManager.ts))**
+- Manages three types of configuration sources:
+  1. **Manual Configuration**: User-configured `relayMeter.apiKey`/`relayMeter.apiUrl` in VSCode settings (highest priority)
+  2. **Runtime Configuration**: Configuration from `~/.claude/settings.json`, stored in `globalState`
+  3. **Skipped Configuration**: Previously declined configuration updates, stored in `globalState`
+- **Configuration Priority**: Manual > Runtime
+- **GlobalState Keys**:
+  - `claude-relay-meter.runtimeConfig`: Active runtime configuration
+  - `claude-relay-meter.skippedConfig`: Configuration user chose to skip
+- **Core Functions**:
+  - `initialize(context)`: Initialize the config manager
+  - `getEffectiveConfig()`: Get the currently active configuration
+  - `getRuntimeConfig()` / `setRuntimeConfig()`: Manage runtime config
+  - `getSkippedConfig()` / `setSkippedConfig()`: Manage skipped config
+  - `hasManualConfig()`: Check if user has manual configuration
+  - `compareConfigs()`: Compare two configurations for changes
+  - `maskApiKey()`: Mask API key for display (e.g., `cr_b7a7***b1eb`)
+  - `initializeFromClaudeSettings()`: Initialize runtime config from Claude settings on first use
+
+**Claude Settings Watcher ([src/utils/claudeSettingsWatcher.ts](src/utils/claudeSettingsWatcher.ts))**
+- Continuously monitors `~/.claude/settings.json` for changes using `fs.watch()`
+- **Debounce**: 300ms delay to avoid excessive triggers during file edits
+- **Change Detection Logic**:
+  1. When file changes, reads new configuration
+  2. Compares with skipped configuration (not current config)
+  3. If same as skipped config, silently ignores
+  4. If different, immediately prompts user with comparison dialog
+- **User Interaction**:
+  - Shows current config vs new config with masked API keys
+  - Three options: "Use New Config" (default), "Keep Current Config", "Settings"
+  - Pressing Enter or closing dialog uses new config by default
+- **State Management**:
+  - "Use New Config": Clears skipped config, updates runtime config, refreshes data
+  - "Keep Current Config": Saves new config to skipped config (won't prompt again for same config)
+- **Lifecycle**:
+  - Auto-starts when extension activates (if no manual config)
+  - Auto-stops when user adds manual configuration
+  - Auto-restarts when user removes manual configuration
+  - Properly cleaned up on extension deactivation
+
+**Configuration Change Flow**:
+```
+~/.claude/settings.json changes
+  ↓
+File watcher detects change (debounced 300ms)
+  ↓
+Read new configuration
+  ↓
+Compare with skipped configuration
+  ↓
+Same? → Skip, no prompt
+Different? → Prompt user immediately
+  ↓
+User chooses:
+  - Use New Config → Clear skipped, update runtime, refresh
+  - Keep Current → Save to skipped (won't prompt again)
+  - Settings → Open settings page
+  - Default (Enter/Close) → Use new config
+```
 
 ### Utilities
 
@@ -215,10 +278,19 @@ All settings under `relayMeter.*` namespace:
   - **Auto-conversion**: If only `apiKey` is provided, it's automatically converted to `apiId` via API call
 
 **Auto-Configuration from Claude Code Settings:**
-- If `apiUrl` or `apiId`/`apiKey` are not configured, the extension will attempt to read them from `~/.claude/settings.json`
+- If `apiUrl` or `apiId`/`apiKey` are not manually configured, the extension automatically reads them from `~/.claude/settings.json`
 - This file is used by Claude Code and contains `ANTHROPIC_AUTH_TOKEN` (maps to `apiKey`) and `ANTHROPIC_BASE_URL` (maps to `apiUrl`)
 - The extension automatically removes the `/api` suffix from `ANTHROPIC_BASE_URL` if present
-- **Priority order**: User manual configuration > Claude Code settings.json
+- **Configuration Storage**: Auto-read config is stored in `globalState` as runtime config, separate from manual settings
+- **Priority order**: Manual configuration (VSCode settings) > Runtime configuration (from Claude settings)
+- **Change Detection**: Extension continuously monitors `~/.claude/settings.json` for changes
+  - When changes detected, compares with previously skipped configuration
+  - Only prompts if configuration is different from last skipped version
+  - User can choose to use new config or keep current (skipped configs won't prompt again)
+- **Lifecycle Management**:
+  - File watcher starts automatically when no manual config exists
+  - File watcher stops when user adds manual configuration
+  - File watcher restarts when user removes manual configuration
 - Example Claude Code settings.json:
   ```json
   {
@@ -229,6 +301,7 @@ All settings under `relayMeter.*` namespace:
   }
   ```
 - The extension will use: `apiKey = "cr_b7a7..."` and `apiUrl = "https://hk1.pincc.ai"` (note: `/api` removed)
+- **Data Isolation**: Runtime config and skipped config are stored in VSCode globalState, completely separate from manual settings
 
 **Optional:**
 - `refreshInterval`: Update frequency in seconds (min: 10, default: 60)
@@ -289,14 +362,16 @@ src/
 ├── handlers/
 │   └── statusBar.ts         # Status bar management
 ├── interfaces/
-│   ├── types.ts             # Core TypeScript interfaces
+│   ├── types.ts             # Core TypeScript interfaces (including RuntimeConfig)
 │   └── i18n.ts              # Internationalization interfaces
 └── utils/
     ├── logger.ts            # Logging utilities
     ├── formatter.ts         # Number/text formatting
     ├── colorHelper.ts       # Color computation
     ├── i18n.ts              # Internationalization system
-    └── claudeSettingsReader.ts  # Claude Code settings reader
+    ├── configManager.ts     # Configuration management (manual/runtime/skipped)
+    ├── claudeSettingsWatcher.ts  # File watcher for ~/.claude/settings.json
+    └── claudeSettingsReader.ts   # Claude Code settings reader
 ```
 
 ## Internationalization (i18n)

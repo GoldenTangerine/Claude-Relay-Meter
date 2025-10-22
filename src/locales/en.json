@@ -1,4 +1,7 @@
 {
+  "common": {
+    "none": "None"
+  },
   "statusBar": {
     "loading": "Loading...",
     "error": "Failed to fetch data",
@@ -26,7 +29,12 @@
     "openSettingsOption": "Open Settings",
     "claudeSettingsChanged": "Claude Code settings updated (API URL: {oldUrl} → {newUrl}). Use new settings?",
     "useNewSettings": "Use New Settings",
-    "keepOldSettings": "Keep Current Settings"
+    "keepOldSettings": "Keep Current Settings",
+    "claudeConfigChangedDetail": "Configuration in ~/.claude/settings.json has been updated:\n\nCurrent Configuration:\n  API URL: {currentUrl}\n  API Key: {currentKey}\n\nNew Configuration:\n  API URL: {newUrl}\n  API Key: {newKey}\n\nUse new configuration?",
+    "useNewConfig": "Use New Config",
+    "keepCurrentConfig": "Keep Current Config",
+    "configUpdated": "Configuration Updated",
+    "configKept": "Current configuration kept"
   },
   "tooltips": {
     "title": "⚡ Claude Relay Meter",
