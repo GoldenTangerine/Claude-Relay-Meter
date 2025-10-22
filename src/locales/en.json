@@ -30,11 +30,12 @@
     "claudeSettingsChanged": "Claude Code settings updated (API URL: {oldUrl} → {newUrl}). Use new settings?",
     "useNewSettings": "Use New Settings",
     "keepOldSettings": "Keep Current Settings",
-    "claudeConfigChangedDetail": "Configuration in ~/.claude/settings.json has been updated:\n\nCurrent Configuration:\n  API URL: {currentUrl}\n  API Key: {currentKey}\n\nNew Configuration:\n  API URL: {newUrl}\n  API Key: {newKey}\n\nUse new configuration?",
+    "claudeConfigChangedDetail": "Configuration change detected in ~/.claude/settings.json:\n\nCurrent: API URL: {currentUrl} | Key: {currentKey}\nNew Config: API URL: {newUrl} | Key: {newKey}\n\nUse new configuration?",
     "useNewConfig": "Use New Config",
     "keepCurrentConfig": "Keep Current Config",
     "configUpdated": "Configuration Updated",
-    "configKept": "Current configuration kept"
+    "configKept": "Current configuration kept",
+    "watchDisabled": "Claude Settings monitoring disabled. To re-enable, turn on 'Watch Claude Settings Changes' in settings"
   },
   "tooltips": {
     "title": "⚡ Claude Relay Meter",
@@ -58,7 +59,8 @@
     "needConfiguration": "⚙️ Claude Relay Meter\n\nConfiguration Required\n\n{message}",
     "pleaseConfigureFirst": "Please configure API URL (required) and either API ID or API Key (choose one)",
     "pleaseConfigureApiUrl": "Please configure API URL (required)",
-    "pleaseConfigureApiIdOrKey": "Please configure either API ID or API Key (choose one)"
+    "pleaseConfigureApiIdOrKey": "Please configure either API ID or API Key (choose one)",
+    "watchDisabled": "Claude Settings monitoring disabled"
   },
   "errors": {
     "invalidApiUrl": "Invalid API URL format",

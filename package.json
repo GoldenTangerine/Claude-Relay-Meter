@@ -146,6 +146,12 @@
             ],
             "description": "扩展界面语言 / Extension interface language",
             "scope": "window"
+          },
+          "relayMeter.watchClaudeSettings": {
+            "type": "boolean",
+            "default": true,
+            "description": "监听 Claude Settings 变动并自动提示更新 / Watch Claude Settings changes and prompt for updates",
+            "scope": "window"
           }
         }
       }

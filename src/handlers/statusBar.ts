@@ -9,6 +9,7 @@ import { formatCost, formatPercentage, formatTooltipLine, formatLargeNumber } fr
 import { getStatusBarColor } from '../utils/colorHelper';
 import { log } from '../utils/logger';
 import { t } from '../utils/i18n';
+import * as ConfigManager from '../utils/configManager';
 
 /**
  * 创建状态栏项
@@ -196,6 +197,12 @@ function createTooltip(data: RelayApiResponse, apiUrl: string, apiId: string): v
   tooltip.appendMarkdown(
     `[${t('commands.openSettings')}](command:claude-relay-meter.openSettings) | [${t('tooltips.openWebDashboard')}](command:claude-relay-meter.openWebDashboard?${webDashboardArgs})\n\n`
   );
+
+  // 监听状态提示
+  const watchEnabled = ConfigManager.isWatchEnabled();
+  if (!watchEnabled) {
+    tooltip.appendMarkdown(`⚠️ ${t('tooltips.watchDisabled')}\n\n`);
+  }
 
   // 更新时间
   const now = new Date().toLocaleString();

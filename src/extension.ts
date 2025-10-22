@@ -21,6 +21,7 @@ import { StatusBarConfig } from './interfaces/types';
 import { initializeI18n, t, setOnLanguageChangeCallback } from './utils/i18n';
 import * as ConfigManager from './utils/configManager';
 import * as ClaudeSettingsWatcher from './utils/claudeSettingsWatcher';
+import { readClaudeSettings } from './utils/claudeSettingsReader';
 
 // 全局变量
 let statusBarItem: vscode.StatusBarItem;
@@ -38,9 +39,6 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // 初始化国际化系统（在日志之后、其他初始化之前）
     initializeI18n();
-
-    // 初始化配置管理器
-    ConfigManager.initialize(context);
 
     // 设置语言变更回调
     setOnLanguageChangeCallback((newLanguage: string, languageLabel: string) => {
@@ -72,8 +70,8 @@ export async function activate(context: vscode.ExtensionContext) {
     // 监听窗口焦点变化
     registerWindowFocusListener(context);
 
-    // 初始化运行时配置（如果需要）
-    await ConfigManager.initializeFromClaudeSettings();
+    // 初始化配置:如果设置为空,自动从 Claude Settings 读取并填入
+    await initializeConfigFromClaudeSettings();
 
     // 获取配置并验证
     const config = getConfiguration();
@@ -114,9 +112,12 @@ export async function activate(context: vscode.ExtensionContext) {
       startRefreshTimer();
     }
 
-    // 启动文件监听器（只在没有手动配置时）
-    if (!ConfigManager.hasManualConfig()) {
-      ClaudeSettingsWatcher.startWatching(context, updateStats);
+    // 启动文件监听器（检查监听开关是否启用）
+    if (ConfigManager.isWatchEnabled()) {
+      ClaudeSettingsWatcher.startWatching(updateStats);
+      log('[激活] 文件监听已启动');
+    } else {
+      log('[激活] 文件监听已禁用');
     }
 
     log(t('logs.activationComplete'));
@@ -225,19 +226,17 @@ function registerConfigurationListener(context: vscode.ExtensionContext): void {
       if (event.affectsConfiguration('relayMeter')) {
         log(t('logs.configChanged'));
 
-        // 检查是否是手动配置变更（apiKey 或 apiUrl）
-        if (
-          event.affectsConfiguration('relayMeter.apiKey') ||
-          event.affectsConfiguration('relayMeter.apiUrl') ||
-          event.affectsConfiguration('relayMeter.apiId')
-        ) {
-          // 手动配置变更，需要重新判断是否启停文件监听
-          if (ConfigManager.hasManualConfig()) {
-            // 有手动配置，停止文件监听
-            ClaudeSettingsWatcher.stopWatching();
+        // 检查是否是监听开关变更
+        if (event.affectsConfiguration('relayMeter.watchClaudeSettings')) {
+          const watchEnabled = ConfigManager.isWatchEnabled();
+          if (watchEnabled) {
+            // 开启监听
+            ClaudeSettingsWatcher.startWatching(updateStats);
+            log('[配置变更] 文件监听已开启');
           } else {
-            // 清除了手动配置，启动文件监听
-            ClaudeSettingsWatcher.startWatching(context, updateStats);
+            // 关闭监听
+            ClaudeSettingsWatcher.stopWatching();
+            log('[配置变更] 文件监听已关闭');
           }
         }
 
@@ -385,19 +384,10 @@ function stopRefreshTimer(): void {
 function getConfiguration(): StatusBarConfig {
   const config = vscode.workspace.getConfiguration('relayMeter');
 
-  // 获取有效配置（手动配置 > 运行时配置）
-  const effectiveConfig = ConfigManager.getEffectiveConfig();
-
-  let apiUrl = '';
-  let apiId = '';
-  let apiKey = '';
-
-  if (effectiveConfig) {
-    apiUrl = effectiveConfig.apiUrl;
-    // apiKey 可能是 apiKey 或 apiId
-    apiKey = effectiveConfig.apiKey;
-    log(`[配置] 使用${ConfigManager.hasManualConfig() ? '手动' : '运行时'}配置`);
-  }
+  // 直接从 VSCode 设置读取配置
+  const apiUrl = config.get<string>('apiUrl', '');
+  const apiId = config.get<string>('apiId', '');
+  const apiKey = config.get<string>('apiKey', '');
 
   return {
     apiUrl,
@@ -422,4 +412,33 @@ function getConfiguration(): StatusBarConfig {
 export function getRefreshIntervalMs(): number {
   const config = getConfiguration();
   return config.refreshInterval * 1000;
+}
+
+/**
+ * 初始化配置:如果设置为空,自动从 Claude Settings 读取并填入
+ */
+async function initializeConfigFromClaudeSettings(): Promise<void> {
+  // 检查当前是否已有配置
+  if (ConfigManager.hasConfig()) {
+    log('[初始化] 已有配置,跳过从 Claude Settings 初始化');
+    return;
+  }
+
+  // 从 Claude Settings 读取配置
+  const claudeSettings = readClaudeSettings();
+
+  if (!claudeSettings.apiKey || !claudeSettings.apiUrl) {
+    log('[初始化] Claude Settings 中没有有效配置');
+    return;
+  }
+
+  // 写入 VSCode 设置
+  try {
+    await ConfigManager.updateVSCodeConfig(claudeSettings.apiKey, claudeSettings.apiUrl);
+    log('[初始化] 从 Claude Settings 自动填入配置成功');
+  } catch (error) {
+    if (error instanceof Error) {
+      log(`[初始化] 从 Claude Settings 填入配置失败: ${error.message}`, true);
+    }
+  }
 }

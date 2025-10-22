@@ -2,48 +2,101 @@
 
 所有关于此项目的重要更改都将记录在此文件中。
 
-## [1.0.8] - 2025-10-21
+## [1.0.8] - 2025-10-22
+
+### 🔄 重大重构
+- **配置管理系统完全重构**
+  - 移除 `globalState` 存储,所有配置统一在 VSCode 设置中管理
+  - 配置初始化时自动从 `~/.claude/settings.json` 读取并填入 VSCode 设置
+  - 简化配置优先级:只使用 VSCode 设置作为唯一配置源
+  - 大幅简化代码架构,提升维护性
 
 ### ✨ 新增
-- **自动读取 Claude Code 配置**
-  - 如果用户未配置 API URL 或 API Key/ID，扩展会自动尝试从 `~/.claude/settings.json` 读取配置
+- **自动配置初始化**
+  - 首次使用时自动从 `~/.claude/settings.json` 读取配置
   - 自动读取 `ANTHROPIC_AUTH_TOKEN`（映射为 `apiKey`）
-  - 自动读取 `ANTHROPIC_BASE_URL`（映射为 `apiUrl`，自动去除 `/api` 后缀）
-  - **优先级**：用户手动配置 > Claude Code settings.json
+  - 自动读取 `ANTHROPIC_BASE_URL`（映射为 `apiUrl`,自动去除 `/api` 后缀）
+  - 仅在设置为空时才自动填入,避免覆盖用户配置
   - 跨平台支持（Windows/macOS/Linux）
-  - 新增工具模块：`src/utils/claudeSettingsReader.ts`
 
-- **Claude Settings 配置变更检测**
-  - 当用户完全依赖 Claude Code 配置时（未手动配置任何内容），自动监测配置变更
-  - 每次刷新数据时检测 `apiUrl` 和 `apiKey` 是否变化
-  - 检测到变更时显示友好提示，询问用户是否使用新配置
-  - 用户可选择"使用新配置"或"保持当前配置"
-  - 详细的变更日志记录（旧配置 → 新配置）
-  - 不干扰手动配置的用户（部分或全部手动配置时不触发监测）
+- **智能配置变更监听**
+  - 实时监听 `~/.claude/settings.json` 文件变更（300ms 防抖）
+  - 检测到配置变更时立即弹出友好提示
+  - 对比当前 VSCode 设置与新配置,仅在不同时提示
+  - 用户可选择:
+    - **"使用新配置"** - 更新 VSCode 设置,继续监听
+    - **"保持当前配置"** - 关闭监听开关,不再提示
+  - 配置对比使用脱敏显示,保护 API Key 安全
+
+- **监听控制开关**
+  - 新增配置项 `relayMeter.watchClaudeSettings`（boolean,默认 true）
+  - 用户可在设置中随时开启/关闭 Claude Settings 监听
+  - 关闭监听后不再检测配置变更,直到用户手动重新开启
+  - 状态栏 tooltip 显示监听状态提示（关闭时显示 ⚠️ 警告）
 
 ### 🎨 改进
 - **简化悬浮窗按钮文字**
   - "打开设置" → "设置"
   - "网页仪表板" → "仪表盘"
-  - 减少文字，界面更简洁清爽
+  - 减少文字,界面更简洁清爽
+
+- **优化配置变更提示**
+  - 提示消息更简洁,单行显示配置对比
+  - API Key 使用脱敏格式显示（如 `cr_b7a7***b1eb`）
+  - 默认行为优化:按 Enter 或关闭对话框即使用新配置
 
 ### 🛠️ 技术改进
-- 新增全局变量 `lastClaudeSettings` 和 `isUsingClaudeSettings` 用于配置变更追踪
-- 修改 `getConfiguration()` 函数，添加 Claude settings 使用情况判断逻辑
-- 新增 `checkClaudeSettingsChange()` 函数，智能检测配置变更
-- 修改 `updateStats()` 函数，在刷新前检测配置变更并提示用户
-- 更新中英文语言包，添加配置变更相关提示文本
+- **configManager.ts 完全重写**
+  - 移除所有 `globalState` 相关逻辑
+  - 移除 `RuntimeConfig`, `SkippedConfig` 等复杂概念
+  - 新增函数:
+    - `getVSCodeConfig()` - 获取 VSCode 设置
+    - `updateVSCodeConfig()` - 更新 VSCode 设置
+    - `hasConfig()` - 检查是否有配置
+    - `isWatchEnabled()` - 检查监听开关
+    - `setWatchEnabled()` - 设置监听开关
+  - 保留通用函数: `compareConfigs()`, `maskApiKey()`
+
+- **claudeSettingsWatcher.ts 重构**
+  - 移除 `extensionContext` 依赖
+  - 配置比对改为:新配置 vs 当前 VSCode 设置
+  - 新增 `disableWatching()` 函数处理监听关闭
+  - 移除 `applyNewConfig()` 和 `keepCurrentConfig()` 复杂逻辑
+  - 简化为直接操作 VSCode 设置
+
+- **extension.ts 初始化优化**
+  - 移除 `ConfigManager.initialize(context)` 调用
+  - 新增 `initializeConfigFromClaudeSettings()` 函数
+  - 简化配置读取逻辑,直接从 VSCode 设置获取
+  - 监听开关变更时动态启停文件监听
+  - 移除手动配置检查逻辑,改用监听开关判断
+
+- **statusBar.ts 状态显示**
+  - 添加监听状态检测
+  - 关闭监听时在 tooltip 显示警告提示
+  - 导入 `ConfigManager` 模块
+
+### 🌐 国际化更新
+- 中文翻译（zh.json）:
+  - `notifications.watchDisabled` - 监听关闭提示
+  - `notifications.claudeConfigChangedDetail` - 优化配置变更提示格式
+  - `tooltips.watchDisabled` - 监听状态提示
+
+- 英文翻译（en.json）:
+  - 对应的完整英文翻译
 
 ### 📝 文档更新
-- 更新 `CLAUDE.md` - 添加"Auto-Configuration from Claude Code Settings"章节
-- 添加 Claude Settings Reader 工具说明
-- 更新文件组织结构，包含新的 `claudeSettingsReader.ts`
-- 添加配置优先级和自动读取逻辑说明
+- 更新 `CLAUDE.md` - 更新配置管理系统说明
+- 添加监听开关配置说明
+- 更新配置变更检测流程图
+- 更新技术架构说明
 
-### 💡 使用场景
-- **零配置启动**：Claude Code 用户无需重复配置，即插即用
-- **配置同步**：Claude Code 配置变更时自动检测并提醒
-- **灵活控制**：用户可随时选择手动配置，不受自动读取影响
+### 💡 用户体验提升
+- **零配置体验**: Claude Code 用户首次使用即可自动配置,无需手动设置
+- **配置同步**: Claude Code 配置变更时自动检测并智能提示
+- **灵活控制**: 用户可完全控制是否监听配置变更
+- **状态透明**: 监听状态在 UI 中清晰可见
+- **架构简化**: 移除 globalState,所有配置统一管理,降低复杂度
 
 ---
 
