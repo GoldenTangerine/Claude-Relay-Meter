@@ -10,7 +10,9 @@
     "notConfiguredApiId": "API ID/Key Not Configured",
     "title": "Claude Relay Meter",
     "initializing": "Claude Relay Meter",
-    "refreshData": "Refresh Data"
+    "refreshData": "Refresh Data",
+    "daily": "Daily",
+    "window": "Window"
   },
   "commands": {
     "refreshStats": "Refresh Statistics",
@@ -43,6 +45,11 @@
     "dailyCostLimit": "Daily Cost Limit",
     "totalCostLimit": "Total Cost Limit",
     "opusWeeklyCostLimit": "Opus Model Weekly Cost Limit",
+    "rateLimitTitle": "Rate Limit",
+    "windowLimit": "Window Limit",
+    "opusLabel": "Opus",
+    "resetTime": "Reset Time",
+    "resetsIn": "Resets in {time}",
     "otherStats": "Other Statistics",
     "usageStatus": "Usage Status",
     "usedAmount": "Usage",
@@ -107,5 +114,13 @@
     "customColors": "Custom color configuration / 自定义颜色配置",
     "enableLogging": "Enable detailed logging for debugging / 启用详细日志记录以便调试",
     "language": "Extension interface language / 扩展界面语言"
+  },
+  "time": {
+    "days": "d",
+    "hours": "h",
+    "minutes": "m",
+    "seconds": "s",
+    "separator": " ",
+    "expired": "Expired"
   }
 }

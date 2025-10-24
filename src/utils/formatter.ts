@@ -158,3 +158,49 @@ export function formatLargeNumber(num: number): string {
 
   return num.toString();
 }
+
+/**
+ * 格式化剩余时间，将秒数转换为易读的时间格式
+ * @param seconds - 剩余秒数
+ * @param t - 国际化翻译函数
+ * @returns 格式化后的时间字符串
+ *
+ * 示例：
+ * formatRemainingTime(90061, t) => "1天1小时1分1秒"（中文）
+ * formatRemainingTime(90061, t) => "1d 1h 1m 1s"（英文）
+ * formatRemainingTime(3661, t) => "1小时1分1秒"（中文）
+ * formatRemainingTime(0, t) => "已过期"（中文）/ "Expired"（英文）
+ */
+export function formatRemainingTime(seconds: number, t: (key: string) => string): string {
+  // 如果时间已过期或为负数
+  if (seconds <= 0) {
+    return t('time.expired');
+  }
+
+  // 计算各个时间单位
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = Math.floor(seconds % 60);
+
+  // 构建时间部分
+  const parts: string[] = [];
+  if (days > 0) {
+    parts.push(`${days}${t('time.days')}`);
+  }
+  if (hours > 0) {
+    parts.push(`${hours}${t('time.hours')}`);
+  }
+  if (minutes > 0) {
+    parts.push(`${minutes}${t('time.minutes')}`);
+  }
+  // 如果所有部分都是 0，至少显示秒数
+  if (secs > 0 || parts.length === 0) {
+    parts.push(`${secs}${t('time.seconds')}`);
+  }
+
+  // 根据语言选择合适的分隔符
+  // 中文不需要空格，英文需要空格
+  const separator = t('time.separator');
+  return parts.join(separator);
+}

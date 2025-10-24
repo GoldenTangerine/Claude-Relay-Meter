@@ -5,7 +5,7 @@
 
 import * as vscode from 'vscode';
 import { RelayApiResponse, CostStats } from '../interfaces/types';
-import { formatCost, formatPercentage, formatTooltipLine, formatLargeNumber } from '../utils/formatter';
+import { formatCost, formatPercentage, formatTooltipLine, formatLargeNumber, formatRemainingTime } from '../utils/formatter';
 import { getStatusBarColor } from '../utils/colorHelper';
 import { log } from '../utils/logger';
 import { t } from '../utils/i18n';
@@ -56,11 +56,37 @@ export function updateStatusBar(
       limits.dailyCostLimit
     );
 
-    // 设置状态栏文本：$(graph) $使用量/$限额 百分比%
-    statusBarItem.text = `$(graph) ${dailyStats.formattedUsed}/${dailyStats.formattedLimit} ${dailyStats.formattedPercentage}%`;
+    // 检测是否有周限制（rate limit window）
+    const hasWindowLimit = limits.currentWindowCost > 0 && limits.rateLimitCost > 0;
 
-    // 设置状态栏颜色
-    statusBarItem.color = getStatusBarColor(dailyStats.percentage);
+    // 根据是否有周限制决定状态栏显示格式
+    if (hasWindowLimit) {
+      // 计算周限制统计
+      const windowStats = calculateCostStats(
+        limits.currentWindowCost,
+        limits.rateLimitCost
+      );
+
+      // 有周限制时，显示：$(graph) 日:$X/$Y Z% | 周:$A/$B C%
+      statusBarItem.text = `$(graph) ${t('statusBar.daily')}:${dailyStats.formattedUsed}/${dailyStats.formattedLimit} ${dailyStats.formattedPercentage}% | ${t('statusBar.window')}:${windowStats.formattedUsed}/${windowStats.formattedLimit} ${windowStats.formattedPercentage}%`;
+
+      // 使用周限制的百分比来设置颜色（周限制优先级更高）
+      statusBarItem.color = getStatusBarColor(windowStats.percentage);
+
+      log(
+        `[状态栏] 状态栏更新成功 - 每日: ${dailyStats.formattedUsed}/${dailyStats.formattedLimit} (${dailyStats.formattedPercentage}%), 周限制: ${windowStats.formattedUsed}/${windowStats.formattedLimit} (${windowStats.formattedPercentage}%)`
+      );
+    } else {
+      // 无周限制时，保持原格式：$(graph) $X/$Y Z%
+      statusBarItem.text = `$(graph) ${dailyStats.formattedUsed}/${dailyStats.formattedLimit} ${dailyStats.formattedPercentage}%`;
+
+      // 设置状态栏颜色
+      statusBarItem.color = getStatusBarColor(dailyStats.percentage);
+
+      log(
+        `[状态栏] 状态栏更新成功 - 每日: ${dailyStats.formattedUsed}/${dailyStats.formattedLimit} (${dailyStats.formattedPercentage}%)`
+      );
+    }
 
     // 创建并设置悬停提示
     const tooltip = createTooltip(data, apiUrl, apiId);
@@ -68,10 +94,6 @@ export function updateStatusBar(
 
     // 显示状态栏项
     statusBarItem.show();
-
-    log(
-      `[状态栏] 状态栏更新成功 - 每日: ${dailyStats.formattedUsed}/${dailyStats.formattedLimit} (${dailyStats.formattedPercentage}%)`
-    );
   } catch (error) {
     log(`[状态栏] 更新状态栏失败：${error}`, true);
     throw error;
@@ -169,16 +191,39 @@ function createTooltip(data: RelayApiResponse, apiUrl: string, apiId: string): v
     );
   }
 
-  // Opus 模型周费用限制
+  // 费率限制（包括 Opus 周费用和周限制）
   if (opusStats.limit > 0) {
-    tooltip.appendMarkdown(`### 🚀 ${t('tooltips.opusWeeklyCostLimit')}\n`);
+    tooltip.appendMarkdown(`### 🚀 ${t('tooltips.rateLimitTitle')}\n`);
+
+    // Opus 模型周费用
     tooltip.appendMarkdown(
-      `**${t('tooltips.usageStatus')}：** ${opusStats.formattedUsed} / ${opusStats.formattedLimit}  ${getColoredPercentage(opusStats)}\n\n`
+      `**${t('tooltips.opusLabel')}：** ${opusStats.formattedUsed} / ${opusStats.formattedLimit}  ${getColoredPercentage(opusStats)}\n\n`
     );
+
+    // 检测是否有周限制（rate limit window）
+    const hasWindowLimit = limits.currentWindowCost > 0 && limits.rateLimitCost > 0;
+    if (hasWindowLimit) {
+      // 计算周限制统计
+      const windowStats = calculateCostStats(limits.currentWindowCost, limits.rateLimitCost);
+
+      // 周限制显示
+      tooltip.appendMarkdown(
+        `**${t('tooltips.windowLimit')}：** ${windowStats.formattedUsed} / ${windowStats.formattedLimit}  ${getColoredPercentage(windowStats)}\n\n`
+      );
+
+      // 剩余时间显示
+      if (limits.windowRemainingSeconds !== null && limits.windowRemainingSeconds > 0) {
+        const remainingTime = formatRemainingTime(limits.windowRemainingSeconds, t);
+        tooltip.appendMarkdown(
+          `**${t('tooltips.resetTime')}：** ${t('tooltips.resetsIn', { time: remainingTime })}\n\n`
+        );
+      }
+    }
+
+    tooltip.appendMarkdown('\n');
   }
 
-  // 其他统计信息（合并到一行）
-  tooltip.appendMarkdown(`### 📈 ${t('tooltips.otherStats')}\n`);
+  // 其他统计信息（合并到一行，无标题）
   tooltip.appendMarkdown(
     `**${t('tooltips.totalRequests')}：** ${formatLargeNumber(data.data.usage.total.requests)} | ` +
     `**Token：** ${formatLargeNumber(data.data.usage.total.allTokens)} | ` +

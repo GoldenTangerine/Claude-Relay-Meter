@@ -138,16 +138,22 @@ Example response:
   - `currentDailyCost`: Current day's spending
   - `currentTotalCost`: Total cumulative spending
   - `weeklyOpusCost`: Current week's Opus model spending
+  - `rateLimitCost`: Rate limit window spending limit (0 = no window limit)
+  - `currentWindowCost`: Current spending in the rate limit window
+  - `windowRemainingSeconds`: Seconds until the rate limit window resets (null = no active window)
 - `data.accounts`: Associated AI service account IDs
 - `data.restrictions`: Model and client access control rules
 
 **Status Bar Handler ([src/handlers/statusBar.ts](src/handlers/statusBar.ts))**
 - Creates and updates status bar item (right side, priority 100)
-- Main display format: `$(graph) $used/$limit percentage%`
+- Main display formats:
+  - Without rate limit window: `$(graph) $used/$limit percentage%`
+  - With rate limit window: `$(graph) Daily:$X/$Y Z% | Window:$A/$B C%`
+  - Rate limit window is detected when `currentWindowCost > 0 && rateLimitCost > 0`
 - Generates rich Markdown tooltips showing:
   - Daily cost limit stats
   - Total cost limit stats
-  - Opus model weekly cost stats
+  - Rate limit stats (Opus model weekly cost + rate limit window + reset time)
   - Total requests/tokens
 - Supports multiple states: loading, error, config prompt, normal display
 
@@ -241,6 +247,10 @@ User chooses:
   - Used for displaying request counts and token numbers in tooltips
   - Numbers < 1000 display as-is, >= 1000 use appropriate unit suffix
   - Decimal precision: 2 decimals for values < 10, 1 decimal for values >= 10
+- `formatRemainingTime()`: Converts seconds to human-readable time format with i18n support
+  - Chinese: "1天2小时3分4秒" (no separator)
+  - English: "1d 2h 3m 4s" (space separator)
+  - Returns "已过期"/"Expired" for non-positive values
 - All formatting ensures clean display without unnecessary precision
 
 **Color Helper ([src/utils/colorHelper.ts](src/utils/colorHelper.ts))**
@@ -384,14 +394,15 @@ src/
 ### Language Pack Structure
 
 Language packs are JSON files in `src/locales/` with the following structure:
-- `statusBar`: Status bar text (loading, errors, configuration prompts)
+- `statusBar`: Status bar text (loading, errors, configuration prompts, daily/window labels)
 - `commands`: Command names and messages
 - `notifications`: User notification messages
-- `tooltips`: Hover tooltip content
+- `tooltips`: Hover tooltip content (including rate limit and reset time labels)
 - `errors`: Error messages
 - `logs`: Development/debug log messages
 - `api`: API-related messages
 - `settings`: Configuration descriptions
+- `time`: Time unit labels (days, hours, minutes, seconds, separator, expired)
 
 ### Adding New Languages
 
