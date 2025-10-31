@@ -56,26 +56,56 @@ export function startWatching(onRefresh?: () => Promise<void>): void {
   }
 
   const settingsPath = getClaudeSettingsPath();
+  log(`[Settings Watcher] 尝试启动文件监听: ${settingsPath}`);
 
   // 检查文件是否存在
-  if (!fs.existsSync(settingsPath)) {
-    log(`[Settings Watcher] Claude Settings 文件不存在,无法启动监听: ${settingsPath}`);
+  const fileExists = fs.existsSync(settingsPath);
+  log(`[Settings Watcher] 文件存在性检查: ${fileExists ? '文件存在' : '文件不存在'}`);
+
+  if (!fileExists) {
+    const warningMsg = `Claude Settings 文件不存在: ${settingsPath}`;
+    log(`[Settings Watcher] ${warningMsg}`, true);
+
+    // 显示警告提示给用户
+    vscode.window.showWarningMessage(
+      `无法启动 Claude Settings 文件监听:\n${warningMsg}\n\n请确保 Claude Code 已正确配置。`
+    );
     return;
   }
 
   try {
     // 启动文件监听
     fileWatcher = fs.watch(settingsPath, (eventType, filename) => {
+      log(`[Settings Watcher] 文件事件: type=${eventType}, file=${filename || 'unknown'}`);
+
       if (eventType === 'change') {
         log('[Settings Watcher] 检测到文件变更');
         handleFileChange();
       }
     });
 
-    log('[Settings Watcher] 文件监听已启动');
+    // 添加错误事件监听器
+    fileWatcher.on('error', (error) => {
+      log(`[Settings Watcher] 文件监听运行时错误: ${error.message}`, true);
+
+      // 显示错误提示
+      vscode.window.showErrorMessage(
+        `Claude Settings 文件监听出错: ${error.message}\n监听已自动停止。`
+      );
+
+      // 清理状态
+      stopWatching();
+    });
+
+    log('[Settings Watcher] 文件监听已成功启动');
   } catch (error) {
     if (error instanceof Error) {
       log(`[Settings Watcher] 启动文件监听失败: ${error.message}`, true);
+
+      // 显示错误提示
+      vscode.window.showErrorMessage(
+        `无法启动 Claude Settings 文件监听: ${error.message}`
+      );
     }
   }
 }
