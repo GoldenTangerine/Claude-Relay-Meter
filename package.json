@@ -43,6 +43,11 @@
         "command": "claude-relay-meter.selectLanguage",
         "title": "Claude Relay Meter: Select Language / 选择语言",
         "icon": "$(globe)"
+      },
+      {
+        "command": "claude-relay-meter.reloadClaudeConfig",
+        "title": "Claude Relay Meter: Reload Claude Configuration / 重载 Claude 配置",
+        "icon": "$(sync)"
       }
     ],
     "configuration": [

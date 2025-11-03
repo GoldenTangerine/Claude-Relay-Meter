@@ -240,7 +240,9 @@ function createTooltip(data: RelayApiResponse, apiUrl: string, apiId: string): v
   // 提示和操作按钮（合并到两行）
   tooltip.appendMarkdown(`💡 **${t('tooltips.tip')}：** ${t('tooltips.clickToRefresh')}\n`);
   tooltip.appendMarkdown(
-    `[${t('commands.openSettings')}](command:claude-relay-meter.openSettings) | [${t('tooltips.openWebDashboard')}](command:claude-relay-meter.openWebDashboard?${webDashboardArgs})\n\n`
+    `[${t('commands.openSettings')}](command:claude-relay-meter.openSettings) | ` +
+    `[${t('tooltips.openWebDashboard')}](command:claude-relay-meter.openWebDashboard?${webDashboardArgs}) | ` +
+    `[${t('tooltips.reloadConfig')}](command:claude-relay-meter.manualReloadConfig)\n\n`
   );
 
   // 监听状态提示
@@ -346,4 +348,26 @@ export function showConfigPrompt(
   statusBarItem.show();
 
   log(`[状态栏] 配置提示已设置：${statusText}`);
+}
+
+/**
+ * 创建重载配置按钮
+ * @returns VSCode 状态栏项实例
+ */
+export function createReloadButton(): vscode.StatusBarItem {
+  log('[状态栏] 创建重载配置按钮...');
+
+  // 创建状态栏项，显示在右侧，优先级为 99（在主状态栏项右侧）
+  const reloadButton = vscode.window.createStatusBarItem(
+    vscode.StatusBarAlignment.Right,
+    99
+  );
+
+  // 设置图标和文本
+  reloadButton.text = '$(sync)';
+  reloadButton.tooltip = t('tooltips.reloadClaudeConfig');
+  reloadButton.command = 'claude-relay-meter.reloadClaudeConfig';
+
+  log('[状态栏] 重载配置按钮创建成功');
+  return reloadButton;
 }

@@ -78,7 +78,9 @@ export function startWatching(onRefresh?: () => Promise<void>): void {
     fileWatcher = fs.watch(settingsPath, (eventType, filename) => {
       log(`[Settings Watcher] 文件事件: type=${eventType}, file=${filename || 'unknown'}`);
 
-      if (eventType === 'change') {
+      // 同时处理 change 和 rename 事件
+      // macOS 等系统在使用原子写入保存文件时会触发 rename 事件
+      if (eventType === 'change' || eventType === 'rename') {
         log('[Settings Watcher] 检测到文件变更');
         handleFileChange();
       }

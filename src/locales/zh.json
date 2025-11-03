@@ -21,7 +21,9 @@
     "configureNow": "立即配置",
     "later": "稍后",
     "languageChanged": "语言已切换为 {language}，界面将自动更新。",
-    "selectLanguagePrompt": "选择 Claude Relay Meter 界面语言 / Select Language"
+    "selectLanguagePrompt": "选择 Claude Relay Meter 界面语言 / Select Language",
+    "reloadClaudeConfig": "重载 Claude 配置",
+    "reloadClaudeConfigDescription": "从 ~/.claude/settings.json 重新加载配置"
   },
   "notifications": {
     "configInvalid": "Claude Relay Meter: {message}",
@@ -37,7 +39,11 @@
     "keepCurrentConfig": "保持当前配置",
     "configUpdated": "配置已更新",
     "configKept": "已保持当前配置",
-    "watchDisabled": "已关闭 Claude Settings 监听,如需重新开启请到设置中启用「监听 Claude Settings 变动」"
+    "watchDisabled": "已关闭 Claude Settings 监听,如需重新开启请到设置中启用「监听 Claude Settings 变动」",
+    "configReloaded": "配置已从 Claude Settings 重新加载",
+    "configReloadFailed": "重载配置失败: {error}",
+    "claudeSettingsNotFound": "未找到 ~/.claude/settings.json 文件",
+    "claudeSettingsEmpty": "Claude Settings 文件中未找到有效配置"
   },
   "tooltips": {
     "title": "⚡ Claude Relay Meter",
@@ -61,6 +67,8 @@
     "clickToRefresh": "点击状态栏刷新数据",
     "clickToConfigure": "点击打开设置",
     "openWebDashboard": "仪表盘",
+    "reloadClaudeConfig": "重载配置",
+    "reloadConfig": "重载配置",
     "tip": "提示",
     "updateTime": "更新时间",
     "needConfiguration": "⚙️ Claude Relay Meter\n\n需要配置\n\n{message}",
@@ -93,7 +101,9 @@
     "openingSettings": "打开设置",
     "timerStarted": "启动定时刷新，间隔：{interval} 秒",
     "i18nInitialized": "国际化系统已初始化",
-    "languageChanged": "语言已切换: {language}"
+    "languageChanged": "语言已切换: {language}",
+    "reloadingClaudeConfig": "重新加载 Claude Settings 配置...",
+    "claudeConfigReloaded": "Claude Settings 配置已重新加载"
   },
   "api": {
     "requestingUserStats": "开始请求用量数据，URL: {url}/apiStats/api/user-stats",

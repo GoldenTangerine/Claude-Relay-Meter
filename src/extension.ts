@@ -11,6 +11,7 @@ import {
   showErrorStatus,
   showLoadingStatus,
   showConfigPrompt,
+  createReloadButton,
 } from './handlers/statusBar';
 import {
   fetchRelayStatsWithRetry,
@@ -25,6 +26,7 @@ import { readClaudeSettings } from './utils/claudeSettingsReader';
 
 // 全局变量
 let statusBarItem: vscode.StatusBarItem;
+let reloadButton: vscode.StatusBarItem;
 let refreshTimer: NodeJS.Timeout | undefined;
 let isWindowFocused: boolean = true;
 
@@ -55,10 +57,15 @@ export async function activate(context: vscode.ExtensionContext) {
     statusBarItem = createStatusBarItem();
     context.subscriptions.push(statusBarItem);
 
+    // 创建重载配置按钮
+    reloadButton = createReloadButton();
+    context.subscriptions.push(reloadButton);
+
     // ⚠️ 关键：立即显示状态栏项，确保用户能看到
     // 即使配置无效，状态栏也应该显示提示
     statusBarItem.text = `$(sync~spin) ${t('statusBar.initializing')}`;
     statusBarItem.show();
+    reloadButton.show();
     log(t('logs.statusBarCreated'));
 
     // 注册命令
@@ -212,7 +219,58 @@ function registerCommands(context: vscode.ExtensionContext): void {
     }
   );
 
-  context.subscriptions.push(refreshCommand, openSettingsCommand, selectLanguageCommand, openWebDashboardCommand);
+  // 重载 Claude 配置命令
+  const reloadClaudeConfigCommand = vscode.commands.registerCommand(
+    'claude-relay-meter.reloadClaudeConfig',
+    async () => {
+      log(t('logs.reloadingClaudeConfig'));
+
+      try {
+        // 读取 Claude Settings
+        const claudeSettings = readClaudeSettings();
+
+        // 检查是否读取到配置
+        if (!claudeSettings.apiKey && !claudeSettings.apiUrl) {
+          vscode.window.showWarningMessage(t('notifications.claudeSettingsEmpty'));
+          return;
+        }
+
+        // 更新到 VSCode 配置
+        const config = vscode.workspace.getConfiguration('relayMeter');
+        if (claudeSettings.apiKey) {
+          await config.update('apiKey', claudeSettings.apiKey, true);
+        }
+        if (claudeSettings.apiUrl) {
+          await config.update('apiUrl', claudeSettings.apiUrl, true);
+        }
+
+        log(t('logs.claudeConfigReloaded'));
+
+        // 显示成功提示
+        vscode.window.showInformationMessage(t('notifications.configReloaded'));
+
+        // 刷新数据
+        await updateStats();
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        logError(`[命令] 重载配置失败：${errorMessage}`);
+        vscode.window.showErrorMessage(
+          t('notifications.configReloadFailed', { error: errorMessage })
+        );
+      }
+    }
+  );
+
+  // 手动更新配置命令（从 Tooltip 触发）
+  const manualReloadConfigCommand = vscode.commands.registerCommand(
+    'claude-relay-meter.manualReloadConfig',
+    async () => {
+      log('[命令] 手动更新配置（从 Tooltip 触发）');
+      await handleManualReloadConfig();
+    }
+  );
+
+  context.subscriptions.push(refreshCommand, openSettingsCommand, selectLanguageCommand, openWebDashboardCommand, reloadClaudeConfigCommand, manualReloadConfigCommand);
 }
 
 /**
@@ -440,5 +498,78 @@ async function initializeConfigFromClaudeSettings(): Promise<void> {
     if (error instanceof Error) {
       log(`[初始化] 从 Claude Settings 填入配置失败: ${error.message}`, true);
     }
+  }
+}
+
+/**
+ * 处理手动更新配置（从 Tooltip 按钮触发）
+ */
+async function handleManualReloadConfig(): Promise<void> {
+  try {
+    log('[手动更新] 开始读取 Claude Settings...');
+
+    // 1. 读取 Claude Settings 新配置
+    const claudeSettings = readClaudeSettings();
+
+    if (!claudeSettings.apiKey || !claudeSettings.apiUrl) {
+      vscode.window.showWarningMessage(t('notifications.claudeSettingsEmpty'));
+      return;
+    }
+
+    // 2. 获取当前 VSCode 配置
+    const currentConfig = ConfigManager.getVSCodeConfig();
+
+    // 3. 比对配置
+    const newConfig: ConfigManager.Config = {
+      apiKey: claudeSettings.apiKey,
+      apiUrl: claudeSettings.apiUrl
+    };
+
+    if (ConfigManager.compareConfigs(newConfig, currentConfig)) {
+      vscode.window.showInformationMessage('配置已是最新，无需更新');
+      log('[手动更新] 配置相同，无需更新');
+      return;
+    }
+
+    // 4. 显示配置对比对话框
+    const message = t('notifications.claudeConfigChangedDetail', {
+      currentUrl: currentConfig?.apiUrl || t('common.none'),
+      currentKey: ConfigManager.maskApiKey(currentConfig?.apiKey || ''),
+      newUrl: newConfig.apiUrl,
+      newKey: ConfigManager.maskApiKey(newConfig.apiKey)
+    });
+
+    const useNewConfigButton = t('notifications.useNewConfig');
+    const keepCurrentConfigButton = t('notifications.keepCurrentConfig');
+    const openSettingsButton = t('commands.openSettings');
+
+    // 5. 提示用户选择（使用模态对话框）
+    const choice = await vscode.window.showInformationMessage(
+      message,
+      { modal: true },
+      useNewConfigButton,
+      keepCurrentConfigButton,
+      openSettingsButton
+    );
+
+    // 6. 处理用户选择
+    if (choice === useNewConfigButton) {
+      log('[手动更新] 用户选择：使用新配置');
+      await ConfigManager.updateVSCodeConfig(newConfig.apiKey, newConfig.apiUrl);
+      vscode.window.showInformationMessage(t('notifications.configUpdated'));
+
+      // 刷新数据
+      await updateStats();
+    } else if (choice === keepCurrentConfigButton) {
+      log('[手动更新] 用户选择：保持当前配置');
+    } else if (choice === openSettingsButton) {
+      log('[手动更新] 用户选择：打开设置');
+      vscode.commands.executeCommand('workbench.action.openSettings', 'relayMeter');
+    }
+
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    log(`[手动更新] 更新配置失败：${errorMessage}`, true);
+    vscode.window.showErrorMessage(`更新配置失败: ${errorMessage}`);
   }
 }

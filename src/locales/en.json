@@ -21,7 +21,9 @@
     "configureNow": "Configure Now",
     "later": "Later",
     "languageChanged": "Language changed to {language}. Interface will update automatically.",
-    "selectLanguagePrompt": "Select Claude Relay Meter Interface Language / 选择界面语言"
+    "selectLanguagePrompt": "Select Claude Relay Meter Interface Language / 选择界面语言",
+    "reloadClaudeConfig": "Reload Claude Config",
+    "reloadClaudeConfigDescription": "Reload configuration from ~/.claude/settings.json"
   },
   "notifications": {
     "configInvalid": "Claude Relay Meter: {message}",
@@ -37,7 +39,11 @@
     "keepCurrentConfig": "Keep Current Config",
     "configUpdated": "Configuration Updated",
     "configKept": "Current configuration kept",
-    "watchDisabled": "Claude Settings monitoring disabled. To re-enable, turn on 'Watch Claude Settings Changes' in settings"
+    "watchDisabled": "Claude Settings monitoring disabled. To re-enable, turn on 'Watch Claude Settings Changes' in settings",
+    "configReloaded": "Configuration reloaded from Claude Settings",
+    "configReloadFailed": "Failed to reload configuration: {error}",
+    "claudeSettingsNotFound": "~/.claude/settings.json file not found",
+    "claudeSettingsEmpty": "No valid configuration found in Claude Settings file"
   },
   "tooltips": {
     "title": "⚡ Claude Relay Meter",
@@ -61,6 +67,8 @@
     "clickToRefresh": "Click status bar to refresh data",
     "clickToConfigure": "Click to open settings",
     "openWebDashboard": "Dashboard",
+    "reloadClaudeConfig": "Reload Config",
+    "reloadConfig": "Reload Config",
     "tip": "Tip",
     "updateTime": "Update Time",
     "needConfiguration": "⚙️ Claude Relay Meter\n\nConfiguration Required\n\n{message}",
@@ -93,7 +101,9 @@
     "openingSettings": "Opening settings",
     "timerStarted": "Refresh timer started, interval: {interval} seconds",
     "i18nInitialized": "Internationalization system initialized",
-    "languageChanged": "Language changed: {language}"
+    "languageChanged": "Language changed: {language}",
+    "reloadingClaudeConfig": "Reloading Claude Settings configuration...",
+    "claudeConfigReloaded": "Claude Settings configuration reloaded"
   },
   "api": {
     "requestingUserStats": "Requesting user stats, URL: {url}/apiStats/api/user-stats",
