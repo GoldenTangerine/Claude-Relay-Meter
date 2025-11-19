@@ -197,6 +197,13 @@ MIT License
 
 ### 更新日志
 
+#### v1.1.0 (2025-11-19)
+- ✨ **新增**：状态栏悬浮窗显示账户过期时间
+- 🎯 **功能**：过期时间精确到秒，支持完整倒计时显示（天时分秒）
+- 🎨 **优化**：已过期账户使用红色警告样式突出显示
+- 🌐 **国际化**：新增过期时间相关的中英文翻译
+- 📝 **文档**：更新 CLAUDE.md 项目文档
+
 #### v1.0.3 (2025-10-11)
 - ✨ **新增**：网页仪表板快捷入口
 - 🎨 **改进**：优化悬浮窗操作按钮布局（两行显示）
@@ -412,6 +419,13 @@ If you encounter any issues or have suggestions:
 MIT License
 
 ### Changelog
+
+#### v1.1.0 (2025-11-19)
+- ✨ **Added**: Account expiration time display in status bar tooltip
+- 🎯 **Feature**: Precise countdown to expiration with second-level accuracy (days, hours, minutes, seconds)
+- 🎨 **Optimization**: Expired accounts highlighted with red warning style
+- 🌐 **i18n**: Added expiration-related translations for Chinese and English
+- 📝 **Docs**: Updated CLAUDE.md project documentation
 
 #### v1.0.3 (2025-10-11)
 - ✨ **Added**: Web dashboard quick access button

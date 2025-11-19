@@ -5,7 +5,7 @@
 
 import * as vscode from 'vscode';
 import { RelayApiResponse, CostStats } from '../interfaces/types';
-import { formatCost, formatPercentage, formatTooltipLine, formatLargeNumber, formatRemainingTime } from '../utils/formatter';
+import { formatCost, formatPercentage, formatTooltipLine, formatLargeNumber, formatRemainingTime, formatExpiryDate } from '../utils/formatter';
 import { getStatusBarColor } from '../utils/colorHelper';
 import { log } from '../utils/logger';
 import { t } from '../utils/i18n';
@@ -176,6 +176,21 @@ function createTooltip(data: RelayApiResponse, apiUrl: string, apiId: string): v
   // 标题和用户信息
   tooltip.appendMarkdown(`## ${t('tooltips.title')}\n`);
   tooltip.appendMarkdown(`**${t('tooltips.user')}：** ${data.data.name}\n\n`);
+
+  // 过期时间显示
+  const expiresAt = data.data.expiresAt;
+  const formattedExpiry = formatExpiryDate(expiresAt, t);
+
+  // 判断是否已过期（检查格式化结果中是否包含"已过期"）
+  const isExpired = formattedExpiry.includes(t('tooltips.expiredOn'));
+
+  if (isExpired) {
+    // 已过期：红色警告样式
+    tooltip.appendMarkdown(`⚠️ **${t('tooltips.expiresAt')}：** <span style="color: #FF6600">${formattedExpiry}</span>\n\n`);
+  } else {
+    // 未过期或永久有效：普通样式
+    tooltip.appendMarkdown(`**${t('tooltips.expiresAt')}：** ${formattedExpiry}\n\n`);
+  }
 
   // 每日费用限制
   tooltip.appendMarkdown(`### 📊 ${t('tooltips.dailyCostLimit')}\n`);

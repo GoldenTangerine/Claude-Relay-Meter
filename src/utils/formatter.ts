@@ -204,3 +204,83 @@ export function formatRemainingTime(seconds: number, t: (key: string) => string)
   const separator = t('time.separator');
   return parts.join(separator);
 }
+
+/**
+ * 格式化过期时间，显示日期和剩余天数
+ * @param expiresAt - ISO 8601 格式的过期时间字符串 (例如: "2025-09-29T11:24:19.439Z")
+ * @param t - 国际化翻译函数
+ * @returns 格式化后的过期时间字符串，如果为空则返回"永久有效"
+ *
+ * 示例：
+ * formatExpiryDate("2025-09-29T11:24:19.439Z", t) => "2025/09/29 11:24:19 (120天 后过期)"（未过期）
+ * formatExpiryDate("2024-01-15T08:30:00.000Z", t) => "2024/01/15 08:30:00 (已过期)"（已过期）
+ * formatExpiryDate("", t) => "永久有效"（空字符串）
+ */
+export function formatExpiryDate(expiresAt: string, t: (key: string, params?: any) => string): string {
+  // 如果 expiresAt 为空，返回"永久有效"
+  if (!expiresAt || expiresAt.trim() === '') {
+    return t('tooltips.permanent');
+  }
+
+  try {
+    // 解析 ISO 8601 日期字符串
+    const expiryDate = new Date(expiresAt);
+
+    // 检查日期是否有效
+    if (isNaN(expiryDate.getTime())) {
+      return t('tooltips.permanent'); // 无效日期，显示永久有效
+    }
+
+    // 格式化日期为 yyyy/MM/DD hh:mm:ss
+    const year = expiryDate.getFullYear();
+    const month = String(expiryDate.getMonth() + 1).padStart(2, '0');
+    const day = String(expiryDate.getDate()).padStart(2, '0');
+    const hours = String(expiryDate.getHours()).padStart(2, '0');
+    const minutes = String(expiryDate.getMinutes()).padStart(2, '0');
+    const seconds = String(expiryDate.getSeconds()).padStart(2, '0');
+
+    const formattedDate = `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`;
+
+    // 计算距离过期的时间差（精确到秒）
+    const now = new Date();
+    const diffMs = expiryDate.getTime() - now.getTime();
+    const diffSeconds = Math.floor(diffMs / 1000);
+
+    // 根据是否过期返回不同的格式
+    if (diffSeconds < 0) {
+      // 已过期
+      return `${formattedDate} (${t('tooltips.expiredOn')})`;
+    } else {
+      // 未过期，计算完整的时间差（天、小时、分钟、秒）
+      const days = Math.floor(diffSeconds / 86400);
+      const hours = Math.floor((diffSeconds % 86400) / 3600);
+      const minutes = Math.floor((diffSeconds % 3600) / 60);
+      const seconds = diffSeconds % 60;
+
+      // 构建时间部分（复用 formatRemainingTime 的逻辑）
+      const parts: string[] = [];
+      if (days > 0) {
+        parts.push(`${days}${t('time.days')}`);
+      }
+      if (hours > 0) {
+        parts.push(`${hours}${t('time.hours')}`);
+      }
+      if (minutes > 0) {
+        parts.push(`${minutes}${t('time.minutes')}`);
+      }
+      // 如果所有部分都是 0，至少显示秒数
+      if (seconds > 0 || parts.length === 0) {
+        parts.push(`${seconds}${t('time.seconds')}`);
+      }
+
+      // 根据语言选择合适的分隔符（中文无空格，英文有空格）
+      const separator = t('time.separator');
+      const timeStr = parts.join(separator);
+
+      return `${formattedDate} (${t('tooltips.expiresInDetail', { time: timeStr })})`;
+    }
+  } catch (error) {
+    // 解析失败，返回永久有效
+    return t('tooltips.permanent');
+  }
+}

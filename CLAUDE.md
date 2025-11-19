@@ -35,11 +35,16 @@ The extension is published as a `.vsix` file. After making changes:
 
 **Extension Lifecycle ([src/extension.ts](src/extension.ts))**
 - Entry point managing activation/deactivation
-- Initializes i18n system on startup
-- Registers commands: `refreshStats`, `openSettings`, `selectLanguage`, and `openWebDashboard`
+- Critical initialization order (see Important Implementation Details #1):
+  1. First: `initializeLogging()` - Must be called before any log statements
+  2. Second: `initializeI18n()` - Required before any translation calls
+- Registers commands: `refreshStats`, `openSettings`, `selectLanguage`, `openWebDashboard`, `reloadClaudeConfig`, and `manualReloadConfig`
   - `openWebDashboard`: Opens the web dashboard in browser at `{apiUrl}/admin-next/api-stats?apiId={apiId}`
+  - `reloadClaudeConfig`: Manually reloads configuration from `~/.claude/settings.json` and updates VSCode settings
+  - `manualReloadConfig`: Triggered from tooltip button, prompts user to choose between new and current config
 - Manages timer-based auto-refresh with window focus awareness
 - Handles configuration changes (including language switching) and re-initialization
+- Auto-initializes config from Claude Settings if VSCode settings are empty
 - Configuration namespace: `relayMeter.*`
 
 **API Service ([src/services/api.ts](src/services/api.ts))**
@@ -61,7 +66,7 @@ Example response:
 {
   "success": true,
   "data": {
-    "id": "21add92a-cb42-11b4-a054-c1e11cde3a1f",
+    "id": "21add92a-cb42-122b4-a154-c1e11cde451f",
     "name": "100🔪",
     "description": "",
     "isActive": true,
@@ -161,55 +166,50 @@ Example response:
 - [src/interfaces/types.ts](src/interfaces/types.ts): API and configuration types
   - `RelayApiResponse`: Root API response structure
   - `RelayUserData`: User account data with usage, limits, permissions
-  - `LimitsData`: All cost/rate limits (daily, total, weekly Opus)
+  - `LimitsData`: All cost/rate limits (daily, total, weekly Opus, rate limit window)
   - `StatusBarConfig`: Extension configuration interface (includes apiId and apiKey)
   - `ApiKeyResponse`: Response interface for API Key to ID conversion
-  - `CostStats`: Computed statistics for display
-  - `RuntimeConfig`: Runtime configuration interface (apiKey and apiUrl)
+  - `CostStats`: Computed statistics for display (used, limit, percentage, formatted values)
 - [src/interfaces/i18n.ts](src/interfaces/i18n.ts): Internationalization types
   - `LanguagePack`: Complete language pack interface structure
 
 ### Configuration Management System
 
 **Config Manager ([src/utils/configManager.ts](src/utils/configManager.ts))**
-- Manages three types of configuration sources:
-  1. **Manual Configuration**: User-configured `relayMeter.apiKey`/`relayMeter.apiUrl` in VSCode settings (highest priority)
-  2. **Runtime Configuration**: Configuration from `~/.claude/settings.json`, stored in `globalState`
-  3. **Skipped Configuration**: Previously declined configuration updates, stored in `globalState`
-- **Configuration Priority**: Manual > Runtime
-- **GlobalState Keys**:
-  - `claude-relay-meter.runtimeConfig`: Active runtime configuration
-  - `claude-relay-meter.skippedConfig`: Configuration user chose to skip
+- Manages configuration sources with simple VSCode settings-based approach
 - **Core Functions**:
-  - `initialize(context)`: Initialize the config manager
-  - `getEffectiveConfig()`: Get the currently active configuration
-  - `getRuntimeConfig()` / `setRuntimeConfig()`: Manage runtime config
-  - `getSkippedConfig()` / `setSkippedConfig()`: Manage skipped config
-  - `hasManualConfig()`: Check if user has manual configuration
-  - `compareConfigs()`: Compare two configurations for changes
+  - `hasConfig()`: Check if any configuration exists (apiUrl + apiKey/apiId)
+  - `getVSCodeConfig()`: Get current config from VSCode settings
+  - `updateVSCodeConfig()`: Update VSCode settings with new apiKey and apiUrl
+  - `compareConfigs()`: Compare two configurations for changes (returns true if identical)
   - `maskApiKey()`: Mask API key for display (e.g., `cr_b7a7***b1eb`)
-  - `initializeFromClaudeSettings()`: Initialize runtime config from Claude settings on first use
+  - `isWatchEnabled()`: Check if Claude Settings file watching is enabled
+  - `setWatchEnabled()`: Enable/disable file watching feature
+- **Configuration Storage**: All settings are stored in VSCode workspace configuration under `relayMeter.*` namespace
+- **Auto-initialization**: Extension automatically reads from `~/.claude/settings.json` and populates VSCode settings if they are empty on first activation
 
 **Claude Settings Watcher ([src/utils/claudeSettingsWatcher.ts](src/utils/claudeSettingsWatcher.ts))**
 - Continuously monitors `~/.claude/settings.json` for changes using `fs.watch()`
 - **Debounce**: 300ms delay to avoid excessive triggers during file edits
 - **Change Detection Logic**:
-  1. When file changes, reads new configuration
-  2. Compares with skipped configuration (not current config)
-  3. If same as skipped config, silently ignores
+  1. When file changes, reads new configuration from Claude Settings
+  2. Compares with current VSCode configuration
+  3. If identical, silently ignores
   4. If different, immediately prompts user with comparison dialog
 - **User Interaction**:
   - Shows current config vs new config with masked API keys
-  - Three options: "Use New Config" (default), "Keep Current Config", "Settings"
-  - Pressing Enter or closing dialog uses new config by default
+  - Three options: "Use New Config", "Keep Current Config", "Settings"
+  - Non-modal dialog allows user to continue working
 - **State Management**:
-  - "Use New Config": Clears skipped config, updates runtime config, refreshes data
-  - "Keep Current Config": Saves new config to skipped config (won't prompt again for same config)
+  - "Use New Config": Updates VSCode settings with new config, shows success notification, refreshes data
+  - "Keep Current Config" or dismissing dialog: **Disables file watching** to prevent future interruptions
+  - "Settings": Opens VSCode settings page for manual configuration
 - **Lifecycle**:
-  - Auto-starts when extension activates (if no manual config)
-  - Auto-stops when user adds manual configuration
-  - Auto-restarts when user removes manual configuration
+  - Auto-starts when extension activates if `relayMeter.watchClaudeSettings` is enabled (default: true)
+  - Auto-stops when user chooses "Keep Current Config" (disables the setting)
+  - Can be re-enabled manually in settings
   - Properly cleaned up on extension deactivation
+  - Handles file system errors gracefully with user-facing error messages
 
 **Configuration Change Flow**:
 ```
@@ -219,16 +219,15 @@ File watcher detects change (debounced 300ms)
   ↓
 Read new configuration
   ↓
-Compare with skipped configuration
+Compare with current VSCode config
   ↓
 Same? → Skip, no prompt
 Different? → Prompt user immediately
   ↓
 User chooses:
-  - Use New Config → Clear skipped, update runtime, refresh
-  - Keep Current → Save to skipped (won't prompt again)
+  - Use New Config → Update VSCode settings, refresh data
+  - Keep Current / Close Dialog → Disable watching, stop bothering user
   - Settings → Open settings page
-  - Default (Enter/Close) → Use new config
 ```
 
 ### Utilities
@@ -288,19 +287,20 @@ All settings under `relayMeter.*` namespace:
   - **Auto-conversion**: If only `apiKey` is provided, it's automatically converted to `apiId` via API call
 
 **Auto-Configuration from Claude Code Settings:**
-- If `apiUrl` or `apiId`/`apiKey` are not manually configured, the extension automatically reads them from `~/.claude/settings.json`
+- If `apiUrl` or `apiId`/`apiKey` are not manually configured, the extension automatically reads them from `~/.claude/settings.json` on first activation
 - This file is used by Claude Code and contains `ANTHROPIC_AUTH_TOKEN` (maps to `apiKey`) and `ANTHROPIC_BASE_URL` (maps to `apiUrl`)
-- The extension automatically removes the `/api` suffix from `ANTHROPIC_BASE_URL` if present
-- **Configuration Storage**: Auto-read config is stored in `globalState` as runtime config, separate from manual settings
-- **Priority order**: Manual configuration (VSCode settings) > Runtime configuration (from Claude settings)
-- **Change Detection**: Extension continuously monitors `~/.claude/settings.json` for changes
-  - When changes detected, compares with previously skipped configuration
-  - Only prompts if configuration is different from last skipped version
-  - User can choose to use new config or keep current (skipped configs won't prompt again)
-- **Lifecycle Management**:
-  - File watcher starts automatically when no manual config exists
-  - File watcher stops when user adds manual configuration
-  - File watcher restarts when user removes manual configuration
+- The extension automatically removes the `/api` suffix from `ANTHROPIC_BASE_URL` if present (case-insensitive)
+- **Configuration Storage**: All configuration is stored in VSCode workspace settings under `relayMeter.*` namespace
+- **Change Detection**: Extension can monitor `~/.claude/settings.json` for changes (controlled by `watchClaudeSettings` setting)
+  - When changes detected, compares with current VSCode settings
+  - Only prompts if configuration is different
+  - User can choose to use new config, keep current, or open settings
+  - Choosing "Keep Current" automatically disables watching to prevent interruptions
+- **File Watching Lifecycle**:
+  - Starts automatically on activation if `relayMeter.watchClaudeSettings` is true (default)
+  - Can be manually toggled via settings
+  - Stops when user declines config update
+  - Handles file system errors and missing files gracefully
 - Example Claude Code settings.json:
   ```json
   {
@@ -311,7 +311,6 @@ All settings under `relayMeter.*` namespace:
   }
   ```
 - The extension will use: `apiKey = "cr_b7a7..."` and `apiUrl = "https://hk1.pincc.ai"` (note: `/api` removed)
-- **Data Isolation**: Runtime config and skipped config are stored in VSCode globalState, completely separate from manual settings
 
 **Optional:**
 - `refreshInterval`: Update frequency in seconds (min: 10, default: 60)
@@ -320,6 +319,7 @@ All settings under `relayMeter.*` namespace:
 - `customColors`: `{ low: string, medium: string, high: string }` (hex colors)
 - `enableLogging`: Detailed logging (default: true)
 - `language`: Interface language - `"zh"` (Chinese, default) or `"en"` (English)
+- `watchClaudeSettings`: Enable auto-detection of Claude Settings changes (default: true)
 
 ## Key Behaviors
 
@@ -357,7 +357,9 @@ All settings under `relayMeter.*` namespace:
 
 6. **Tooltip Links**: Tooltips use VSCode command URIs (`command:claude-relay-meter.openSettings`) for interactive actions.
 
-7. **Publisher Placeholder**: The `package.json` contains `your-publisher-name` placeholder that should be updated before publishing.
+7. **Status Bar Reload Button**: A separate reload button (`$(sync)` icon) is displayed next to the main status bar item. Clicking it triggers `reloadClaudeConfig` command to manually sync from Claude Settings.
+
+8. **File Watching Error Handling**: The Claude Settings file watcher includes comprehensive error handling for missing files, permission issues, and runtime errors. All errors are shown to users with clear messages.
 
 ## File Organization
 

@@ -48,6 +48,11 @@
   "tooltips": {
     "title": "⚡ Claude Relay Meter",
     "user": "用户",
+    "expiresAt": "过期时间",
+    "permanent": "永久有效",
+    "daysUntilExpiry": "{days}天 后过期",
+    "expiresInDetail": "{time} 后过期",
+    "expiredOn": "已过期",
     "dailyCostLimit": "每日费用限制",
     "totalCostLimit": "总费用限制",
     "opusWeeklyCostLimit": "Opus 模型周费用限制",

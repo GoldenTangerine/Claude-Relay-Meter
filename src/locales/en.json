@@ -48,6 +48,11 @@
   "tooltips": {
     "title": "⚡ Claude Relay Meter",
     "user": "User",
+    "expiresAt": "Expires At",
+    "permanent": "Permanent",
+    "daysUntilExpiry": "Expires in {days} days",
+    "expiresInDetail": "Expires in {time}",
+    "expiredOn": "Expired",
     "dailyCostLimit": "Daily Cost Limit",
     "totalCostLimit": "Total Cost Limit",
     "opusWeeklyCostLimit": "Opus Model Weekly Cost Limit",
