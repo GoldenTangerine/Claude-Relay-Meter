@@ -6,6 +6,10 @@ on:
     tags:
       - 'v*'
 
+# 授予 GITHUB_TOKEN 写入权限
+permissions:
+  contents: write
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -47,15 +51,11 @@ jobs:
           echo "path=$VSIX_FILE" >> $GITHUB_OUTPUT
           echo "name=$(basename $VSIX_FILE)" >> $GITHUB_OUTPUT
 
-      # 8. 创建 GitHub Release
+      # 8. 创建 GitHub Release 并上传文件
       - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          release_name: Release ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
           body: |
             ## Claude Relay Meter ${{ steps.package-version.outputs.version }}
 
@@ -76,16 +76,6 @@ jobs:
             完整更新日志请查看 [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)
 
             For full changelog, see [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)
+          files: ${{ steps.vsix-file.outputs.path }}
           draft: false
           prerelease: false
-
-      # 9. 上传 .vsix 文件到 Release
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ steps.vsix-file.outputs.path }}
-          asset_name: ${{ steps.vsix-file.outputs.name }}
-          asset_content_type: application/octet-stream
