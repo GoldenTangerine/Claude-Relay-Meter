@@ -225,14 +225,14 @@ function createTooltip(data: RelayApiResponse, apiUrl: string, apiId: string): v
       tooltip.appendMarkdown(
         `**${t('tooltips.windowLimit')}：** ${windowStats.formattedUsed} / ${windowStats.formattedLimit}  ${getColoredPercentage(windowStats)}\n\n`
       );
+    }
 
-      // 剩余时间显示
-      if (limits.windowRemainingSeconds !== null && limits.windowRemainingSeconds > 0) {
-        const remainingTime = formatRemainingTime(limits.windowRemainingSeconds, t);
-        tooltip.appendMarkdown(
-          `**${t('tooltips.resetTime')}：** ${t('tooltips.resetsIn', { time: remainingTime })}\n\n`
-        );
-      }
+    // 窗口重置时间独立显示，只要有值就显示
+    if (limits.windowRemainingSeconds !== null && limits.windowRemainingSeconds > 0) {
+      const remainingTime = formatRemainingTime(limits.windowRemainingSeconds, t);
+      tooltip.appendMarkdown(
+        `**${t('tooltips.resetTime')}：** ${t('tooltips.resetsIn', { time: remainingTime })}\n\n`
+      );
     }
 
     tooltip.appendMarkdown('\n');

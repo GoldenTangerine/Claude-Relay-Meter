@@ -158,7 +158,8 @@ Example response:
 - Generates rich Markdown tooltips showing:
   - Daily cost limit stats
   - Total cost limit stats
-  - Rate limit stats (Opus model weekly cost + rate limit window + reset time)
+  - Rate limit stats (Opus model weekly cost + rate limit window)
+  - Window reset time (displayed independently when `windowRemainingSeconds > 0`)
   - Total requests/tokens
 - Supports multiple states: loading, error, config prompt, normal display
 
