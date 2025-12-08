@@ -1,0 +1,91 @@
+name: Release
+
+# 当推送 tag 时触发（格式如 v1.0.0）
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. 检出代码
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. 设置 Node.js 环境
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      # 3. 安装依赖
+      - name: Install dependencies
+        run: npm ci
+
+      # 4. 编译项目
+      - name: Compile project
+        run: npm run compile
+
+      # 5. 打包扩展
+      - name: Package extension
+        run: npm run package
+
+      # 6. 获取版本号（从 package.json）
+      - name: Get version
+        id: package-version
+        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+
+      # 7. 获取 .vsix 文件名
+      - name: Get vsix filename
+        id: vsix-file
+        run: |
+          VSIX_FILE=$(ls builds/*.vsix | head -n 1)
+          echo "path=$VSIX_FILE" >> $GITHUB_OUTPUT
+          echo "name=$(basename $VSIX_FILE)" >> $GITHUB_OUTPUT
+
+      # 8. 创建 GitHub Release
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: Release ${{ github.ref_name }}
+          body: |
+            ## Claude Relay Meter ${{ steps.package-version.outputs.version }}
+
+            ### 安装方式
+            1. 下载下方的 `.vsix` 文件
+            2. 在 VSCode 中打开扩展面板
+            3. 点击 "..." 菜单，选择 "从 VSIX 安装..."
+            4. 选择下载的文件进行安装
+
+            ### Installation
+            1. Download the `.vsix` file below
+            2. Open Extensions panel in VSCode
+            3. Click "..." menu, select "Install from VSIX..."
+            4. Select the downloaded file to install
+
+            ---
+
+            完整更新日志请查看 [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)
+
+            For full changelog, see [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)
+          draft: false
+          prerelease: false
+
+      # 9. 上传 .vsix 文件到 Release
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ steps.vsix-file.outputs.path }}
+          asset_name: ${{ steps.vsix-file.outputs.name }}
+          asset_content_type: application/octet-stream
