@@ -227,15 +227,20 @@ function createTooltip(data: RelayApiResponse, apiUrl: string, apiId: string): v
       );
     }
 
-    // 窗口重置时间独立显示，只要有值就显示
-    if (limits.windowRemainingSeconds !== null && limits.windowRemainingSeconds > 0) {
-      const remainingTime = formatRemainingTime(limits.windowRemainingSeconds, t);
-      tooltip.appendMarkdown(
-        `**${t('tooltips.resetTime')}：** ${t('tooltips.resetsIn', { time: remainingTime })}\n\n`
-      );
-    }
-
     tooltip.appendMarkdown('\n');
+  }
+
+  // 窗口重置时间完全独立显示，不依赖 opusStats
+  // 只要 windowRemainingSeconds 有值就显示
+  if (limits.windowRemainingSeconds !== null && limits.windowRemainingSeconds > 0) {
+    // 如果没有费率限制标题，先添加一个
+    if (opusStats.limit === 0) {
+      tooltip.appendMarkdown(`### ⏱️ ${t('tooltips.resetTime')}\n`);
+    }
+    const remainingTime = formatRemainingTime(limits.windowRemainingSeconds, t);
+    tooltip.appendMarkdown(
+      `**${t('tooltips.resetsIn', { time: remainingTime })}**\n\n`
+    );
   }
 
   // 其他统计信息（合并到一行，无标题）
