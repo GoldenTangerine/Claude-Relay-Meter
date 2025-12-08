@@ -34,22 +34,22 @@ jobs:
       - name: Compile project
         run: npm run compile
 
-      # 5. 打包扩展
-      - name: Package extension
-        run: npm run package
-
-      # 6. 获取版本号（从 package.json）
+      # 5. 获取版本号（从 package.json）
       - name: Get version
         id: package-version
         run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
 
-      # 7. 获取 .vsix 文件名
-      - name: Get vsix filename
+      # 6. 打包扩展（输出到根目录）
+      - name: Package extension
+        run: npx vsce package -o claude-relay-meter-${{ steps.package-version.outputs.version }}.vsix
+
+      # 7. 设置 .vsix 文件路径
+      - name: Set vsix filename
         id: vsix-file
         run: |
-          VSIX_FILE=$(ls builds/*.vsix | head -n 1)
+          VSIX_FILE="claude-relay-meter-${{ steps.package-version.outputs.version }}.vsix"
           echo "path=$VSIX_FILE" >> $GITHUB_OUTPUT
-          echo "name=$(basename $VSIX_FILE)" >> $GITHUB_OUTPUT
+          echo "name=$VSIX_FILE" >> $GITHUB_OUTPUT
 
       # 8. 创建 GitHub Release 并上传文件
       - name: Create Release

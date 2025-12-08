@@ -8,3 +8,4 @@ plan.md
 .claude/settings.local.json
 FINAL_CHECK_REPORT.txt
 SECURITY_CHECK.md
+*.vsix
