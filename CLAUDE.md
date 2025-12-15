@@ -29,6 +29,14 @@ The extension is published as a `.vsix` file. After making changes:
 3. Run `npm run package` to create the `.vsix`
 4. The packaged file appears in `builds/` directory
 
+### Debugging
+To debug the extension in VSCode:
+1. Open the project in VSCode
+2. Press `F5` to launch a new Extension Development Host window
+3. The extension will be loaded in the new window with debugging enabled
+4. Set breakpoints in TypeScript files under `src/`
+5. View debug output in the "Claude Relay Meter" output channel
+
 ## Architecture
 
 ### Core Components
@@ -251,6 +259,11 @@ User chooses:
   - Chinese: "1天2小时3分4秒" (no separator)
   - English: "1d 2h 3m 4s" (space separator)
   - Returns "已过期"/"Expired" for non-positive values
+- `formatExpiryDate()`: Formats account expiration date with countdown
+  - Parses ISO 8601 date strings (e.g., "2025-09-29T11:24:19.439Z")
+  - Returns formatted date with remaining time: "2025/09/29 11:24:19 (120天 后过期)"
+  - Returns "永久有效"/"Permanent" for empty/invalid dates
+  - Shows "(已过期)"/"(Expired)" for past dates
 - All formatting ensures clean display without unnecessary precision
 
 **Color Helper ([src/utils/colorHelper.ts](src/utils/colorHelper.ts))**
@@ -319,6 +332,7 @@ All settings under `relayMeter.*` namespace:
 - `colorThresholds`: `{ low: number, medium: number }` (default: 50, 80)
 - `customColors`: `{ low: string, medium: string, high: string }` (hex colors)
 - `enableLogging`: Detailed logging (default: true)
+- `showErrorNotifications`: Show error popups and auto-open output panel (default: true)
 - `language`: Interface language - `"zh"` (Chinese, default) or `"en"` (English)
 - `watchClaudeSettings`: Enable auto-detection of Claude Settings changes (default: true)
 

@@ -128,6 +128,7 @@
     "colorThresholds": "Color threshold configuration / 颜色阈值配置",
     "customColors": "Custom color configuration / 自定义颜色配置",
     "enableLogging": "Enable detailed logging for debugging / 启用详细日志记录以便调试",
+    "showErrorNotifications": "Show popup notifications and auto-open output panel on errors",
     "language": "Extension interface language / 扩展界面语言"
   },
   "time": {

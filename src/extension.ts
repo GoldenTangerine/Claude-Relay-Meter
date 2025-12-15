@@ -254,9 +254,16 @@ function registerCommands(context: vscode.ExtensionContext): void {
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         logError(`[命令] 重载配置失败：${errorMessage}`);
-        vscode.window.showErrorMessage(
-          t('notifications.configReloadFailed', { error: errorMessage })
-        );
+
+        // 根据配置决定是否显示错误弹窗
+        const config = vscode.workspace.getConfiguration('relayMeter');
+        const showErrorNotifications = config.get<boolean>('showErrorNotifications', true);
+
+        if (showErrorNotifications) {
+          vscode.window.showErrorMessage(
+            t('notifications.configReloadFailed', { error: errorMessage })
+          );
+        }
       }
     }
   );
@@ -382,20 +389,25 @@ async function updateStats(): Promise<void> {
     logError('[更新] 更新统计数据失败', error as Error);
     showErrorStatus(statusBarItem, t('statusBar.error'));
 
-    // 显示错误提示（仅在首次失败时显示）
-    vscode.window
-      .showErrorMessage(
-        t('notifications.errorOccurred', { error: (error as Error).message }),
-        t('notifications.retryOption'),
-        t('notifications.openSettingsOption')
-      )
-      .then((selection) => {
-        if (selection === t('notifications.retryOption')) {
-          updateStats();
-        } else if (selection === t('notifications.openSettingsOption')) {
-          vscode.commands.executeCommand('claude-relay-meter.openSettings');
-        }
-      });
+    // 根据配置决定是否显示错误弹窗
+    const config = vscode.workspace.getConfiguration('relayMeter');
+    const showErrorNotifications = config.get<boolean>('showErrorNotifications', true);
+
+    if (showErrorNotifications) {
+      vscode.window
+        .showErrorMessage(
+          t('notifications.errorOccurred', { error: (error as Error).message }),
+          t('notifications.retryOption'),
+          t('notifications.openSettingsOption')
+        )
+        .then((selection) => {
+          if (selection === t('notifications.retryOption')) {
+            updateStats();
+          } else if (selection === t('notifications.openSettingsOption')) {
+            vscode.commands.executeCommand('claude-relay-meter.openSettings');
+          }
+        });
+    }
   }
 }
 

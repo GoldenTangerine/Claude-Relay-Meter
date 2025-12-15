@@ -2,6 +2,35 @@
 
 所有关于此项目的重要更改都将记录在此文件中。
 
+## [1.1.5] - 2025-12-15
+
+### ✨ 新增
+- **错误通知开关**
+  - 新增配置项 `relayMeter.showErrorNotifications`（boolean，默认 true）
+  - 控制调用失败时是否显示弹窗通知
+  - 控制错误发生时是否自动跳转到输出面板
+  - 关闭后仅更新状态栏错误状态，不打扰用户工作流
+
+### 🎨 改进
+- **更安静的错误处理**
+  - 错误日志仍会写入输出通道（可手动查看）
+  - 状态栏错误状态不受开关影响，始终显示
+  - 激活失败等致命错误不受开关影响，始终通知用户
+
+### 🛠️ 技术改进
+- 更新 `src/utils/logger.ts` - `safeLog()` 函数根据配置控制输出面板显示
+- 更新 `src/extension.ts` - `updateStats()` 和 `reloadClaudeConfigCommand` 添加配置检查
+- 新增配置项定义在 `package.json`
+
+### 🌐 国际化更新
+- 中文翻译：`settings.showErrorNotifications` - "发生错误时显示弹窗通知并自动跳转到输出面板"
+- 英文翻译：`settings.showErrorNotifications` - "Show popup notifications and auto-open output panel on errors"
+
+### 📝 文档更新
+- 更新 `CLAUDE.md` - 添加 `showErrorNotifications` 配置说明
+
+---
+
 ## [1.0.9] - 2025-10-24
 
 ### ✨ 新增

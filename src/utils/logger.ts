@@ -71,9 +71,13 @@ function safeLog(message: string, isError: boolean): void {
     if (outputChannel) {
       outputChannel.appendLine(logMessage);
 
-      // 如果是错误，自动显示输出面板
+      // 如果是错误，根据配置决定是否自动显示输出面板
       if (isError) {
-        outputChannel.show(true);
+        const config = vscode.workspace.getConfiguration('relayMeter');
+        const showErrorNotifications = config.get<boolean>('showErrorNotifications', true);
+        if (showErrorNotifications) {
+          outputChannel.show(true);
+        }
       }
     } else {
       // 如果 outputChannel 未初始化，输出警告
